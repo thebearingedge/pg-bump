@@ -1,0 +1,34 @@
+{
+  "name": "pg-up",
+  "license": "MIT",
+  "description": "A JavaScript CLI for PostgreSQL Migrations.",
+  "version": "0.0.1",
+  "main": "index.js",
+  "engines": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {},
+  "devDependencies": {},
+  "peerDependencies": {
+    "pg": ">= 6.x"
+  },
+  "keywords": [
+    "postgresql",
+    "database",
+    "schema",
+    "migrations"
+  ],
+  "author": "Tim Davis",
+  "contributors": [
+    "Tim Davis <contact@timdav.is> (https://timdav.is)"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/thebearingedge/pg-up.git"
+  },
+  "bugs": {
+    "url": "https://github.com/thebearingedge/pg-up/issues"
+  },
+  "homepage": "https://github.com/thebearingedge/pg-up#readme"
+}
