@@ -1,0 +1,20 @@
+{
+  "lines": 100,
+  "statements": 100,
+  "functions": 100,
+  "branches": 100,
+  "reporter": [
+    "lcov",
+    "text-summary"
+  ],
+  "include": [
+    "src/**/*.js"
+  ],
+  "exclude": [
+    "src/**/*.test.js",
+    "**/__test__.js",
+    "**/index.js",
+    "**/log.js"
+  ],
+  "all": true
+}
