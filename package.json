@@ -15,14 +15,14 @@
   "scripts": {
     "lint": "eslint src/",
     "test": "PGBUMP_ENV=test mocha src/*.test.js",
-    "tdd": "npm t -- -w -R min",
+    "tdd": "npm t -s -- -w -R min",
     "copy": "ncp src/ dist/ --filter='^(?!.*test)'",
     "clean": "rimraf dist/",
     "cover": "nyc npm t -s",
     "check": "nyc check-coverage",
-    "build": "run-s clean copy",
-    "precommit": "run-s lint",
-    "prepush": "run-s cover check"
+    "build": "run-s -s clean copy",
+    "precommit": "run-s -s lint",
+    "prepush": "run-s -s cover check"
   },
   "dependencies": {
     "chalk": "1.1.3",
