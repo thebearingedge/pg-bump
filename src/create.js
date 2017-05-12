@@ -5,7 +5,7 @@ const log = require('./log')
 
 const create = ({ filename, files }) => {
 
-  log(red('[pg-bump]'), green('Creating migration file...'))
+  log(red('[pg-bump]'), green('Creating migration file'))
 
   const file = `${Date.now()}_${path.parse(filename).name}.sql`
   const filesDir = path.resolve(process.cwd(), files)
