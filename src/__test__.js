@@ -1,3 +1,4 @@
+require('dotenv/config')
 const { expect } = require('chai')
 const { describe, it, beforeEach, afterEach } = require('mocha')
 

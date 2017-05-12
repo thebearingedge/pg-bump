@@ -1,6 +1,6 @@
 const path = require('path')
 const fs = require('fs-extra')
-const { describe, afterEach, it, expect } = require('./__test__')
+const { describe, beforeEach, it, expect } = require('./__test__')
 const create = require('./create')
 
 describe('create()', () => {
@@ -9,7 +9,7 @@ describe('create()', () => {
   const templatePath = path.join(__dirname, 'template/default.sql')
   const template = fs.readFileSync(templatePath, 'utf8')
 
-  afterEach(() => fs.removeSync(path.join(cwd, 'migrations')))
+  beforeEach(() => fs.removeSync(path.join(cwd, 'migrations')))
 
   it('creates a new migration script in a directory', () => {
     create({ filename: 'bar', files: 'migrations/../migrations/bar' })
