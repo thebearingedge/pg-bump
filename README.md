@@ -1,4 +1,4 @@
-pg-up
+pg-bump
 --
 
 A Node.js CLI for PostgreSQL Migrations.
