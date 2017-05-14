@@ -1,7 +1,7 @@
 const path = require('path')
 const fs = require('fs-extra')
 const { red, green, cyan, white } = require('chalk')
-const log = require('./log')
+const { log } = require('./helpers')
 
 const create = ({ filename, files }) => {
 

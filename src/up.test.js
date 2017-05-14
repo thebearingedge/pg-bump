@@ -29,24 +29,6 @@ describe('up()', () => {
 
   afterEach(() => client.end())
 
-  it('creates a journal table', () => {
-    return up({ files, tableName })
-      .then(() => client.query(`
-        select table_name
-          from information_schema.tables
-         where table_schema = 'public'
-           and table_type   = 'BASE TABLE'
-      `))
-      .then(({ rows }) => expect(rows).to.have.deep.members([
-        { table_name: 'schema_journal' }
-      ]))
-  })
-
-  it('only creates a journal table once', () => {
-    return up({ files, tableName })
-      .then(() => up({ files, tableName }))
-  })
-
   it('executes a migration script', () => {
     const filePath = path.join(filesDir, `${Date.now()}_books.sql`)
     fs.writeFileSync(filePath, `
@@ -57,6 +39,17 @@ describe('up()', () => {
     return up({ files, tableName })
       .then(() => client.query('select * from books'))
       .then(({ rowCount }) => expect(rowCount).to.equal(0))
+  })
+
+  it('executes a migration script once', () => {
+    const filePath = path.join(filesDir, `${Date.now()}_books.sql`)
+    fs.writeFileSync(filePath, `
+      create table books (
+        title text not null
+      );
+    `)
+    return up({ files, tableName })
+      .then(() => up({ files, tableName }))
   })
 
   it('executes migration scripts in order', () => {
@@ -164,6 +157,35 @@ describe('up()', () => {
               join authors using (author_id)
           `))
       })
+  })
+
+  it('aborts bad batches', () => {
+    const now = Date.now()
+    const authorsTable = `${now}_authors.sql`
+    fs.writeFileSync(path.join(filesDir, authorsTable), `
+      create table authors (
+        author_id   serial,
+        author_name text not null,
+        primary key (author_id)
+      );
+      ---
+      drop table authors;
+    `)
+    const authorsData = `${now + 1}_authors_data.sql`
+    fs.writeFileSync(path.join(filesDir, authorsData), `
+      insert into authors (author_name)
+      values ('Donald Knuth');
+      FAAAAKKK
+      ---
+      truncate table authors restart identity cascade;
+    `)
+    return up({ files, tableName })
+      .then(() => client.query(`
+        select table_name
+          from information_schema.tables
+         where table_schema = 'public'
+      `))
+      .then(({ rows }) => expect(rows).to.have.lengthOf(0))
   })
 
 })
