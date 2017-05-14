@@ -81,8 +81,10 @@ describe('pg-bump', () => {
 
   describe('down [--to]', () => {
 
+    let authorsFile
+
     beforeEach(() => {
-      const authorsFile = `${Date.now()}_authors.sql`
+      authorsFile = `${Date.now()}_authors.sql`
       const authorsTable = `
         create table authors (
           author_id   serial,
@@ -126,6 +128,32 @@ describe('pg-bump', () => {
       .then(({ rows }) => expect(rows).to.have.a.lengthOf(1))
       .then(() => client.query('select * from schema_journal'))
       .then(({ rows }) => expect(rows).to.have.a.lengthOf(0))
+    })
+
+  })
+
+  describe('status', () => {
+
+    beforeEach(() => {
+      fs.removeSync(filesDir)
+      fs.mkdirpSync(filesDir)
+    })
+
+    it('reports a list of pending migrations', () => {
+      const now = Date.now()
+      const authorsTable = `${now}_authors.sql`
+      fs.writeFileSync(path.join(filesDir, authorsTable), `
+        create table authors (
+          author_id   serial,
+          author_name text not null,
+          primary key (author_id)
+        );
+        ---
+        drop table authors;
+      `)
+
+      const output = execSync('PGBUMP_ENV=cli node src/cli.js status')
+      expect(output.toString()).to.include('1 pending')
     })
 
   })

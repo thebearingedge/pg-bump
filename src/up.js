@@ -45,3 +45,5 @@ module.exports = function up({ tableName, files }) {
         .catch(rollback(client))
     })
 }
+
+module.exports.readPending = readPending
