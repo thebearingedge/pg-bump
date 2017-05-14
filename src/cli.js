@@ -1,8 +1,6 @@
 #! /usr/bin/env node
 const yargs = require('yargs')
-const create = require('./create')
-const up = require('./up')
-const down = require('./down')
+const { create, up, down, status } = require('.')
 
 yargs
   .usage('$0 <command> [args]')
@@ -47,6 +45,12 @@ yargs
         describe: 'Revert migrations up to and excluding.',
       }),
     down
+  )
+  .command(
+    'status',
+    'Show pending migrations',
+    yargs => yargs,
+    status
   )
   .help()
   .argv
