@@ -39,16 +39,13 @@ const rollback = client => err =>
 
 const bootstrap = (client, tableName, files) => {
   const [ table, schema = 'public' ] = tableName.split('.').reverse()
-  return client.query({
-    values: [schema, table],
-    text: (`
-      select table_name
-        from information_schema.tables
-       where table_schema = $1
-         and table_name   = $2
-       fetch first row only
-    `)
-  })
+  return client.query(`
+    select table_name
+      from information_schema.tables
+     where table_schema = '${schema}'
+       and table_name   = '${table}'
+     fetch first row only
+  `)
   .then(({ rows: [ found ] }) => {
     if (found) return
     log(red('[pg-bump]', green(`Creating "${tableName}"`)))
