@@ -1,3 +1,5 @@
 module.exports = {
-  create: require('./create')
+  create: require('./create'),
+  up: require('./up'),
+  down: require('./down')
 }
