@@ -32,7 +32,6 @@ const rollback = client => err =>
     .then(() => {
       log(red('\nABORTED:'), white(err.message), '\n')
       err.migration && log(bold(err.file), '\n', yellow(err.migration), '\n')
-      log(white(err.stack))
       // istanbul ignore next
       if (process.env.PGBUMP_ENV !== 'test') process.exit(1)
       return Promise.reject(err)
