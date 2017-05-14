@@ -14,7 +14,7 @@ const readReverting = (files, to) => applied => {
   return { fileNames, reverting }
 }
 
-const revert = (client, tableName) => ({ reverting, fileNames }) => {
+const revert = (client, tableName) => ({ fileNames, reverting }) => {
   if (!fileNames.length) {
     return log(red('[pg-bump]'), green('Already at base migration.'))
   }
@@ -22,16 +22,16 @@ const revert = (client, tableName) => ({ reverting, fileNames }) => {
   return each(reverting, (migration, i) =>
     client
       .query(migration)
+      .then(() => client.query(`
+        delete from ${tableName}
+        where file_name = '${fileNames[i]}'
+      `))
       .then(() => log(cyan('reverted:'), white(fileNames[i])))
-      .catch(err => Promise.reject(Object.assign(err, { migration })))
+      .catch(err => Promise.reject(Object.assign(err, {
+        file: fileNames[i],
+        migration
+      })))
   )
-  .then(() => {
-    const toDelete = fileNames.map(fileName => `'${fileName}'`)
-    return client.query(`
-      delete from ${tableName}
-       where file_name in (${toDelete.join(', ')})
-    `)
-  })
 }
 
 module.exports = function down({ files, to, tableName }) {

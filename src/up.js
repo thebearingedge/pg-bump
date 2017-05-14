@@ -15,7 +15,7 @@ const readPending = files => applied => {
   return { fileNames, pending }
 }
 
-const apply = (client, tableName) => ({ pending, fileNames }) => {
+const apply = (client, tableName) => ({ fileNames, pending }) => {
   if (!fileNames.length) {
     return log(red('[pg-bump]'), green('Already up to date.'))
   }
@@ -23,16 +23,16 @@ const apply = (client, tableName) => ({ pending, fileNames }) => {
   return each(pending, (migration, i) =>
     client
       .query(migration)
+      .then(() => client.query(`
+        insert into ${tableName} (file_name)
+        values ('${fileNames[i]}')
+      `))
       .then(() => log(cyan('applied:'), white(fileNames[i])))
-      .catch(err => Promise.reject(Object.assign(err, { migration })))
+      .catch(err => Promise.reject(Object.assign(err, {
+        file: fileNames[i],
+        migration
+      })))
   )
-  .then(() => {
-    const toInsert = fileNames.map(fileName => `('${fileName}')`)
-    return client.query(`
-      insert into ${tableName} (file_name)
-      values ${toInsert.join(', ')}
-    `)
-  })
 }
 
 module.exports = function up({ tableName, files }) {

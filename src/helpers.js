@@ -1,5 +1,5 @@
 const { Client } = require('pg')
-const { red, white, yellow, green } = require('chalk')
+const { red, white, yellow, green, bold } = require('chalk')
 
 const log = (...args) => {
   // istanbul ignore next
@@ -7,16 +7,21 @@ const log = (...args) => {
   (process.env.PGBUMP_ENV !== 'test') && console.log(...args)
 }
 
-const begin = () => new Promise(resolve => {
-  const client = new Client({})
-  client.connect(() => client.query('begin').then(() => resolve(client)))
-})
-
 const each = (collection, procedure, i = 0) => {
   if (!collection.length) return Promise.resolve()
   return procedure(collection[0], i)
     .then(() => each(collection.slice(1), procedure, i + 1))
 }
+
+const begin = () => new Promise(resolve => {
+  const client = new Client({})
+  client.connect(() => client.query('begin').then(() => resolve(client)))
+})
+
+const commit = client => () =>
+  client
+    .query('commit')
+    .then(() => client.end())
 
 const rollback = client => err => {
   client
@@ -24,15 +29,12 @@ const rollback = client => err => {
     .then(() => client.end())
     .then(() => {
       log(red('\nABORTED:'), white(err.message), '\n')
-      err.migration && log(yellow(err.migration), '\n')
+      err.migration && log(bold(err.file), '\n', yellow(err.migration), '\n')
       log(white(err.stack))
+      // istanbul ignore next
+      if (process.env.PGBUMP_ENV !== 'test') process.exit(1)
     })
 }
-
-const commit = client => () =>
-  client
-    .query('commit')
-    .then(() => client.end())
 
 const loadJournal = (client, tableName) => {
   const [ table, schema = 'public' ] = tableName.split('.').reverse()
