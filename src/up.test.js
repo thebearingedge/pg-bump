@@ -180,6 +180,13 @@ describe('up()', () => {
       truncate table authors restart identity cascade;
     `)
     return up({ files, tableName })
+      .catch(err => err)
+      .then(err =>
+        expect(err)
+          .to.be.an('error')
+          .with.property('message')
+          .that.includes('FAAAAKKK')
+      )
       .then(() => client.query(`
         select table_name
           from information_schema.tables

@@ -118,6 +118,13 @@ describe('down()', () => {
       FAAAAKKK
     `)
     return down({ files, tableName })
+      .catch(err => err)
+      .then(err =>
+        expect(err)
+          .to.be.an('error')
+          .with.property('message')
+          .that.includes('FAAAAKKK')
+      )
       .then(() => client.query(`
         select table_name
           from information_schema.tables

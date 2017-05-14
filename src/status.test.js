@@ -41,4 +41,61 @@ describe('status()', () => {
       .then(report => expect(report).to.deep.equal([fileName]))
   })
 
+  it('reports extra files in the migrations directory', () => {
+    const now = Date.now()
+    const createBooks = `${now}_books.sql`
+    fs.writeFileSync(path.join(filesDir, createBooks), `
+      create table books (
+        title text not null
+      );
+      ---
+      drop table books;
+    `)
+    return status({ files, tableName })
+      .then(() => client.query(`
+        insert into schema_journal (file_name)
+        values ('${createBooks}')
+      `))
+      .then(() => fs.writeFileSync(path.join(filesDir, `${now - 1}_authors.sql`), `
+        create table authors (
+          name text not null
+        );
+        ---
+        drop table authors;
+      `))
+      .then(() => status({ files, tableName }))
+      .catch(err => err)
+      .then(err =>
+        expect(err)
+          .to.be.an('error')
+          .with.property('message')
+          .that.includes('untracked')
+      )
+  })
+
+  it('reports missing files in the migrations directory', () => {
+    const now = Date.now()
+    const createBooks = `${now}_books.sql`
+    fs.writeFileSync(path.join(filesDir, createBooks), `
+      create table books (
+        title text not null
+      );
+      ---
+      drop table books;
+    `)
+    return status({ files, tableName })
+      .then(() => client.query(`
+        insert into schema_journal (file_name)
+        values ('${createBooks}'), ('${Date.now()}_authors.sql')
+      `))
+      .then(() => status({ files, tableName }))
+      .catch(err => err)
+      .then(err =>
+        expect(err)
+          .to.be.an('error')
+          .with.property('message')
+          .that.includes('missing')
+      )
+  })
+
 })

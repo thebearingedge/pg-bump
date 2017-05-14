@@ -1,3 +1,5 @@
+const path = require('path')
+const fs = require('fs-extra')
 const { Client } = require('pg')
 const { red, white, yellow, green, bold } = require('chalk')
 
@@ -23,7 +25,7 @@ const commit = client => () =>
     .query('commit')
     .then(() => client.end())
 
-const rollback = client => err => {
+const rollback = client => err =>
   client
     .query('rollback')
     .then(() => client.end())
@@ -33,10 +35,10 @@ const rollback = client => err => {
       log(white(err.stack))
       // istanbul ignore next
       if (process.env.PGBUMP_ENV !== 'test') process.exit(1)
+      return Promise.reject(err)
     })
-}
 
-const loadJournal = (client, tableName) => {
+const bootstrap = (client, tableName, files) => {
   const [ table, schema = 'public' ] = tableName.split('.').reverse()
   return client.query({
     values: [schema, table],
@@ -64,6 +66,26 @@ const loadJournal = (client, tableName) => {
      order by file_name asc
   `))
   .then(({ rows }) => rows.map(({ file_name }) => file_name))
+  .then(applied => {
+    const filesDir = path.join(process.cwd(), files)
+    fs.ensureDirSync(filesDir)
+    const fileNames = fs.readdirSync(filesDir).sort()
+    const isSynchronized = applied
+      .every((migration, i) => migration === fileNames[i])
+    if (isSynchronized) return { applied, fileNames, filesDir }
+    const missing = applied
+      .filter(fileName => !fileNames.includes(fileName))
+      .map(fileName => ({ status: 'missing', fileName }))
+    const untracked = fileNames
+      .slice(0, applied.length - missing.length)
+      .filter(fileName => !applied.includes(fileName))
+      .map(fileName => ({ status: 'untracked', fileName }))
+    const message = 'Migration history corrupted!\n' + missing
+      .concat(untracked)
+      .map(({ status, fileName }) => `${yellow(status + ' file:')} ${fileName}`)
+      .join('\n')
+    return Promise.reject(new Error(message))
+  })
 }
 
 module.exports = {
@@ -72,5 +94,5 @@ module.exports = {
   begin,
   commit,
   rollback,
-  loadJournal
+  bootstrap
 }
