@@ -42,7 +42,7 @@
     "rimraf": "2.6.1"
   },
   "peerDependencies": {
-    "pg": "6.x"
+    "pg": "^6.2.2"
   },
   "keywords": [
     "postgresql",
