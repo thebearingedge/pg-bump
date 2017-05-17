@@ -10,7 +10,7 @@ describe('status()', () => {
   const cwd = process.cwd()
   const filesDir = path.join(cwd, 'migrations')
   const files = 'migrations'
-  const tableName = 'schema_journal'
+  const journalTable = 'schema_journal'
 
   beforeEach(() => {
     fs.mkdirpSync(filesDir)
@@ -37,7 +37,7 @@ describe('status()', () => {
       ---
       drop table books;
     `)
-    return status({ files, tableName })
+    return status({ files, journalTable })
       .then(report => expect(report).to.deep.equal([fileName]))
   })
 
@@ -51,7 +51,7 @@ describe('status()', () => {
       ---
       drop table books;
     `)
-    return status({ files, tableName })
+    return status({ files, journalTable })
       .then(() => client.query(`
         insert into schema_journal (file_name)
         values ('${createBooks}')
@@ -63,7 +63,7 @@ describe('status()', () => {
         ---
         drop table authors;
       `))
-      .then(() => status({ files, tableName }))
+      .then(() => status({ files, journalTable }))
       .catch(err => err)
       .then(err =>
         expect(err)
@@ -83,12 +83,12 @@ describe('status()', () => {
       ---
       drop table books;
     `)
-    return status({ files, tableName })
+    return status({ files, journalTable })
       .then(() => client.query(`
         insert into schema_journal (file_name)
         values ('${createBooks}'), ('${Date.now()}_authors.sql')
       `))
-      .then(() => status({ files, tableName }))
+      .then(() => status({ files, journalTable }))
       .catch(err => err)
       .then(err =>
         expect(err)

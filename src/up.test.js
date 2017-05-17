@@ -10,7 +10,7 @@ describe('up()', () => {
   const cwd = process.cwd()
   const filesDir = path.join(cwd, 'migrations')
   const files = 'migrations'
-  const tableName = 'schema_journal'
+  const journalTable = 'schema_journal'
 
   beforeEach(() => {
     fs.mkdirpSync(filesDir)
@@ -36,7 +36,7 @@ describe('up()', () => {
         title text not null
       );
     `)
-    return up({ files, tableName })
+    return up({ files, journalTable })
       .then(() => client.query('select * from books'))
       .then(({ rowCount }) => expect(rowCount).to.equal(0))
   })
@@ -48,8 +48,8 @@ describe('up()', () => {
         title text not null
       );
     `)
-    return up({ files, tableName })
-      .then(() => up({ files, tableName }))
+    return up({ files, journalTable })
+      .then(() => up({ files, journalTable }))
   })
 
   it('executes migration scripts in order', () => {
@@ -72,7 +72,7 @@ describe('up()', () => {
                 references authors (author_id)
       );
     `)
-    return up({ files, tableName })
+    return up({ files, journalTable })
       .then(() => client.query(`
         select *
           from authors
@@ -104,7 +104,7 @@ describe('up()', () => {
       ---
       drop table books;
     `)
-    return up({ files, tableName })
+    return up({ files, journalTable })
       .then(() => client.query(`
         select *
           from authors
@@ -134,7 +134,7 @@ describe('up()', () => {
       ---
       drop table books;
     `)
-    return up({ files, tableName })
+    return up({ files, journalTable })
       .then(() => {
         const bookAuthorsPath = path.join(filesDir, `${now + 2}_book_authors.sql`)
         fs.writeFileSync(bookAuthorsPath, `
@@ -149,7 +149,7 @@ describe('up()', () => {
           ---
           drop table book_authors;
         `)
-        return up({ files, tableName })
+        return up({ files, journalTable })
           .then(() => client.query(`
             select *
               from books
@@ -179,7 +179,7 @@ describe('up()', () => {
       ---
       truncate table authors restart identity cascade;
     `)
-    return up({ files, tableName })
+    return up({ files, journalTable })
       .catch(err => err)
       .then(err =>
         expect(err)

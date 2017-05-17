@@ -12,7 +12,7 @@ const readPending = () => ({ applied, fileNames, filesDir }) => {
   return { pending, migrations }
 }
 
-const apply = (client, tableName) => ({ pending, migrations }) => {
+const apply = (client, journalTable) => ({ pending, migrations }) => {
   if (!pending.length) {
     return log(red('[pg-bump]'), green('Already up to date.'))
   }
@@ -21,7 +21,7 @@ const apply = (client, tableName) => ({ pending, migrations }) => {
     client
       .query(migration)
       .then(() => client.query(`
-        insert into ${tableName} (file_name)
+        insert into ${journalTable} (file_name)
         values ('${pending[i]}')
       `))
       .then(() => log(cyan('applied:'), white(pending[i])))
@@ -32,12 +32,12 @@ const apply = (client, tableName) => ({ pending, migrations }) => {
   )
 }
 
-module.exports = function up({ tableName, files }) {
-  return begin()
+module.exports = function up({ journalTable, files, connection }) {
+  return begin(connection)
     .then(client => {
-      return bootstrap(client, tableName, files)
+      return bootstrap(client, journalTable, files)
         .then(readPending())
-        .then(apply(client, tableName))
+        .then(apply(client, journalTable))
         .then(commit(client))
         .catch(rollback(client))
     })

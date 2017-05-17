@@ -158,4 +158,30 @@ describe('pg-bump', () => {
 
   })
 
+  describe('.pgbumprc', () => {
+
+    const filesDir = path.join(cwd, '_migrations')
+    const configPath = path.join(cwd, '.pgbumprc')
+
+    beforeEach(() => {
+      fs.writeFileSync(configPath, `
+        {
+          "files": "_migrations"
+        }
+      `)
+    })
+
+    afterEach(() => {
+      fs.removeSync(filesDir)
+      fs.removeSync(configPath)
+    })
+
+    it('configures pg-bump', () => {
+      execSync('node src/cli.js create foo')
+      const [ created ] = fs.readdirSync(filesDir)
+      expect(created).to.include('foo.sql')
+    })
+
+  })
+
 })

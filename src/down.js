@@ -12,7 +12,7 @@ const readReverting = to => ({ applied, filesDir }) => {
   return { reverting, migrations }
 }
 
-const revert = (client, tableName) => ({ reverting, migrations }) => {
+const revert = (client, journalTable) => ({ reverting, migrations }) => {
   if (!reverting.length) {
     return log(red('[pg-bump]'), green('Already at base migration.'))
   }
@@ -21,7 +21,7 @@ const revert = (client, tableName) => ({ reverting, migrations }) => {
     client
       .query(migration)
       .then(() => client.query(`
-        delete from ${tableName}
+        delete from ${journalTable}
         where file_name = '${reverting[i]}'
       `))
       .then(() => log(cyan('reverted:'), white(reverting[i])))
@@ -32,12 +32,12 @@ const revert = (client, tableName) => ({ reverting, migrations }) => {
   )
 }
 
-module.exports = function down({ files, to, tableName }) {
-  return begin()
+module.exports = function down({ files, to, journalTable, connection }) {
+  return begin(connection)
     .then(client => {
-      return bootstrap(client, tableName, files)
+      return bootstrap(client, journalTable, files)
         .then(readReverting(to))
-        .then(revert(client, tableName))
+        .then(revert(client, journalTable))
         .then(commit(client))
         .catch(rollback(client))
     })
