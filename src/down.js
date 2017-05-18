@@ -1,7 +1,7 @@
 const path = require('path')
 const fs = require('fs-extra')
 const { white, red, green, cyan } = require('chalk')
-const { log, begin, each, commit, rollback, bootstrap } = require('./helpers')
+const { log, begin, each, commit, rollback, bootstrap, logError } = require('./helpers')
 
 const readReverting = to => ({ applied, filesDir }) => {
   const reverting = applied.slice(applied.indexOf(to) + 1).reverse()
@@ -34,11 +34,10 @@ const revert = (client, journalTable) => ({ reverting, migrations }) => {
 
 module.exports = function down({ files, to, journalTable, connection }) {
   return begin(connection)
-    .then(client => {
-      return bootstrap(client, journalTable, files)
+    .then(client => bootstrap(client, journalTable, files)
         .then(readReverting(to))
         .then(revert(client, journalTable))
         .then(commit(client))
-        .catch(rollback(client))
-    })
+        .catch(rollback(client)))
+    .catch(logError())
 }

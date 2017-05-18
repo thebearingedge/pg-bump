@@ -1,7 +1,7 @@
 const path = require('path')
 const fs = require('fs-extra')
 const { red, green, white, cyan } = require('chalk')
-const { log, bootstrap, begin, each, commit, rollback } = require('./helpers')
+const { log, bootstrap, begin, each, commit, rollback, logError } = require('./helpers')
 
 const readPending = () => ({ applied, fileNames, filesDir }) => {
   const pending = fileNames.filter(fileName => !applied.includes(fileName))
@@ -34,13 +34,12 @@ const apply = (client, journalTable) => ({ pending, migrations }) => {
 
 module.exports = function up({ journalTable, files, connection }) {
   return begin(connection)
-    .then(client => {
-      return bootstrap(client, journalTable, files)
+    .then(client => bootstrap(client, journalTable, files)
         .then(readPending())
         .then(apply(client, journalTable))
         .then(commit(client))
-        .catch(rollback(client))
-    })
+        .catch(rollback(client)))
+    .catch(logError())
 }
 
 module.exports.readPending = readPending

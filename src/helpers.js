@@ -15,9 +15,15 @@ const each = (collection, procedure, i = 0) => {
     .then(() => each(collection.slice(1), procedure, i + 1))
 }
 
-const begin = connection => new Promise(resolve => {
+const begin = connection => new Promise((resolve, reject) => {
   const client = new Client(connection)
-  client.connect(() => client.query('begin').then(() => resolve(client)))
+  client.connect(err => {
+    // istanbul ignore next
+    if (err) return reject(err)
+    client
+      .query('begin')
+      .then(() => resolve(client))
+  })
 })
 
 const commit = client => () =>
@@ -29,13 +35,15 @@ const rollback = client => err =>
   client
     .query('rollback')
     .then(() => client.end())
-    .then(() => {
-      log(red('\nABORTED:'), white(err.message), '\n')
-      err.migration && log(bold(err.file), '\n', yellow(err.migration), '\n')
-      // istanbul ignore next
-      if (process.env.PGBUMP_ENV !== 'test') process.exit(1)
-      return Promise.reject(err)
-    })
+    .then(() => Promise.reject(err))
+
+const logError = () => err => {
+  log(red('\nABORTED:'), white(err.message), '\n')
+  err.migration && log(bold(err.file), '\n', yellow(err.migration), '\n')
+  // istanbul ignore next
+  if (process.env.PGBUMP_ENV !== 'test') process.exit(1)
+  return Promise.reject(err)
+}
 
 const bootstrap = (client, journalTable, files) => {
   const [ table, schema = 'public' ] = journalTable.split('.').reverse()
@@ -90,5 +98,6 @@ module.exports = {
   begin,
   commit,
   rollback,
-  bootstrap
+  bootstrap,
+  logError
 }
