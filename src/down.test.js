@@ -10,7 +10,7 @@ describe('down()', () => {
   const cwd = process.cwd()
   const files = 'migrations'
   const filesDir = path.join(cwd, files)
-  const tableName = 'schema_journal'
+  const journalTable = 'schema_journal'
   const now = Date.now()
   const authorsFile = `${now}_authors.sql`
   const booksFile = `${now + 1}_books.sql`
@@ -56,7 +56,7 @@ describe('down()', () => {
     )))
     .then(() => client.query('begin'))
     .then(() => client.query(`
-      create table ${tableName} (
+      create table ${journalTable} (
         applied_at timestamptz(6) not null default now(),
         file_name  text unique not null
       )
@@ -73,7 +73,7 @@ describe('down()', () => {
   afterEach(() => client.end())
 
   it('reverts all migrations', () => {
-    return down({ files, tableName })
+    return down({ files, journalTable })
       .then(() => client.query(`
         select table_name
           from information_schema.tables
@@ -83,12 +83,12 @@ describe('down()', () => {
   })
 
   it('reverts all migrations once', () => {
-    return down({ files, tableName })
-      .then(() => down({ files, tableName }))
+    return down({ files, journalTable })
+      .then(() => down({ files, journalTable }))
   })
 
   it('removes migrations from the journal', () => {
-    return down({ files, tableName })
+    return down({ files, journalTable })
       .then(() => client.query('select * from schema_journal'))
       .then(({ rows }) => expect(rows).to.have.a.lengthOf(0))
   })
@@ -107,7 +107,7 @@ describe('down()', () => {
       ---
       drop table book_authors;
     `)
-    return down({ files, tableName })
+    return down({ files, journalTable })
   })
 
   it('aborts bad batches', () => {
@@ -117,7 +117,7 @@ describe('down()', () => {
       drop table books;
       FAAAAKKK
     `)
-    return down({ files, tableName })
+    return down({ files, journalTable })
       .catch(err => err)
       .then(err =>
         expect(err)
@@ -135,7 +135,7 @@ describe('down()', () => {
 
   it('only reverts applied migrations to specified file', () => {
     const to = authorsFile
-    return down({ files, tableName, to })
+    return down({ files, journalTable, to })
       .then(() => client.query(`
         select table_name
           from information_schema.tables

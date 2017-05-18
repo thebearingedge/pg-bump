@@ -1,7 +1,7 @@
 const path = require('path')
 const fs = require('fs-extra')
 const { white, red, green, cyan } = require('chalk')
-const { log, begin, each, commit, rollback, bootstrap } = require('./helpers')
+const { log, begin, each, commit, rollback, bootstrap, logError } = require('./helpers')
 
 const readReverting = to => ({ applied, filesDir }) => {
   const reverting = applied.slice(applied.indexOf(to) + 1).reverse()
@@ -12,7 +12,7 @@ const readReverting = to => ({ applied, filesDir }) => {
   return { reverting, migrations }
 }
 
-const revert = (client, tableName) => ({ reverting, migrations }) => {
+const revert = (client, journalTable) => ({ reverting, migrations }) => {
   if (!reverting.length) {
     return log(red('[pg-bump]'), green('Already at base migration.'))
   }
@@ -21,7 +21,7 @@ const revert = (client, tableName) => ({ reverting, migrations }) => {
     client
       .query(migration)
       .then(() => client.query(`
-        delete from ${tableName}
+        delete from ${journalTable}
         where file_name = '${reverting[i]}'
       `))
       .then(() => log(cyan('reverted:'), white(reverting[i])))
@@ -32,13 +32,12 @@ const revert = (client, tableName) => ({ reverting, migrations }) => {
   )
 }
 
-module.exports = function down({ files, to, tableName }) {
-  return begin()
-    .then(client => {
-      return bootstrap(client, tableName, files)
+module.exports = function down({ files, to, journalTable, connection }) {
+  return begin(connection)
+    .then(client => bootstrap(client, journalTable, files)
         .then(readReverting(to))
-        .then(revert(client, tableName))
+        .then(revert(client, journalTable))
         .then(commit(client))
-        .catch(rollback(client))
-    })
+        .catch(rollback(client)))
+    .catch(logError())
 }
