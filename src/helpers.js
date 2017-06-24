@@ -1,13 +1,8 @@
 const path = require('path')
 const fs = require('fs-extra')
 const { Client } = require('pg')
-const { red, white, yellow, green, bold } = require('chalk')
-
-const log = (...args) => {
-  // istanbul ignore next
-  // eslint-disable-next-line no-console
-  (process.env.PGBUMP_ENV !== 'test') && console.log(...args)
-}
+const { red, yellow, green } = require('chalk')
+const { log, logError } = require('./log')
 
 const each = (collection, procedure, i = 0) => {
   if (!collection.length) return Promise.resolve()
@@ -18,7 +13,7 @@ const each = (collection, procedure, i = 0) => {
 const begin = connection => new Promise((resolve, reject) => {
   const client = new Client(connection)
   client.connect(err => {
-    // istanbul ignore next
+    /* istanbul ignore next */
     if (err) return reject(err)
     client
       .query('begin')
@@ -36,14 +31,6 @@ const rollback = client => err =>
     .query('rollback')
     .then(() => client.end())
     .then(() => Promise.reject(err))
-
-const logError = () => err => {
-  log(red('\nABORTED:'), white(err.message), '\n')
-  err.migration && log(bold(err.file), '\n', yellow(err.migration), '\n')
-  // istanbul ignore next
-  if (process.env.PGBUMP_ENV !== 'test') process.exit(1)
-  return Promise.reject(err)
-}
 
 const bootstrap = (client, journalTable, files) => {
   const [ table, schema = 'public' ] = journalTable.split('.').reverse()
