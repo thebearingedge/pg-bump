@@ -11,10 +11,10 @@ yargs
     configParser: path => fs.readJsonSync(path, { throws: false }),
     describe: 'Relative path to configuration file.'
   })
-  .option('connection', {
+  .option('connectionVar', {
     alias: 'c',
-    default: {},
-    describe: 'Database connection configuration.'
+    default: 'DATABASE_URL',
+    describe: 'Connection string environment variable.'
   })
   .option('journalTable', {
     alias: 'j',

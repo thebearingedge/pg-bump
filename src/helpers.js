@@ -10,8 +10,8 @@ const each = (collection, procedure, i = 0) => {
     .then(() => each(collection.slice(1), procedure, i + 1))
 }
 
-const begin = connection => new Promise((resolve, reject) => {
-  const client = new Client(connection)
+const begin = connectionVar => new Promise((resolve, reject) => {
+  const client = new Client(process.env[connectionVar])
   client.connect(err => {
     /* istanbul ignore next */
     if (err) return reject(err)
