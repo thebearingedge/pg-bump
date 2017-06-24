@@ -3,8 +3,8 @@ node_js:
   - 6.10.3
 services: postgresql
 before_script:
-  - psql -c 'create database pg_bump_test;' -U postgres
-  - export PGDATABASE=pg_bump_test
+  - psql -c 'create database "pg-bump";' -U postgres
+  - export DATABASE_URL=postgres://127.0.0.1:5432/pg-bump
 install:
   - npm install
   - npm install -g codecov
