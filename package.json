@@ -14,7 +14,7 @@
   },
   "scripts": {
     "lint": "eslint src/",
-    "test": "PGBUMP_ENV=test mocha -r dotenv/config src/*.test.js",
+    "test": "PGBUMP_ENV=test mocha -t 5000 -r dotenv/config src/*.test.js",
     "tdd": "npm t -s -- -w -R min",
     "copy": "ncp src/ dist/ --filter='^(?!.*test)'",
     "clean": "rimraf dist/",
