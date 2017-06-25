@@ -129,3 +129,9 @@ project/
   "files": "./db/migrations"
 }
 ```
+
+##### `.env`
+
+```bash
+POSTGRES_URL=postgres://127.0.0.1:5432/postgres-app
+```
