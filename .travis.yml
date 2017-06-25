@@ -2,11 +2,12 @@ language: node_js
 node_js:
   - 6.10.3
 services: postgresql
-before_script:
-  - psql -c 'create database "pg-bump";' -U postgres
 install:
   - npm install
-  - npm install -g codecov
+before_script:
+  - psql -c 'create database "pg-bump";' -U postgres
 script:
   - npm run cover
+after_script:
+  - npm install -g codecov
   - codecov
