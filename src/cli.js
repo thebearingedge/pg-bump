@@ -1,4 +1,5 @@
 #! /usr/bin/env node
+require('dotenv/config')
 const yargs = require('yargs')
 const fs = require('fs-extra')
 const { create, up, down, status } = require('.')
@@ -9,7 +10,7 @@ yargs
     default: '.pgbumprc',
     config: true,
     configParser: path => fs.readJsonSync(path, { throws: false }),
-    describe: 'Relative path to configuration file.'
+    describe: 'Relative path to optional configuration file.'
   })
   .option('connectionVar', {
     alias: 'c',
@@ -23,28 +24,28 @@ yargs
   })
   .option('files', {
     alias: 'f',
-    default: 'migrations',
+    default: './migrations',
     describe: 'Relative path to migrations directory.',
   })
   .command(
     'create <filename>',
-    'Create a new migration file',
+    'Create a new migration file.',
     yargs => yargs,
     create
   )
   .command(
     'up',
-    'Run all pending migrations',
+    'Apply pending migrations.',
     yargs => yargs,
     up
   )
   .command(
-    'down [--to]',
-    'Revert migrations',
+    'down [--to|-t <filename>]',
+    'Revert applied migrations.',
     yargs => yargs
       .option('to', {
         alias: 't',
-        describe: 'Revert migrations up to and excluding.',
+        describe: 'Revert migrations down to but excluding <filename>.',
       }),
     down
   )
