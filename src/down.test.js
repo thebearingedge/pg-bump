@@ -44,7 +44,7 @@ describe('down()', () => {
       ---
       drop table books;
     `)
-    client = new Client({})
+    client = new Client(process.env.DATABASE_URL)
     client.connect()
     return client.query(`
       select table_name

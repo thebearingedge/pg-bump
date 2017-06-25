@@ -11,7 +11,7 @@ describe('pg-bump', () => {
   const filesDir = path.join(cwd, 'migrations')
 
   beforeEach(() => {
-    client = new Client({})
+    client = new Client(process.env.DATABASE_URL)
     client.connect()
     return client.query(`
       select table_name

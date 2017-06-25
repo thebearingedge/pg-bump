@@ -32,8 +32,8 @@ const apply = (client, journalTable) => ({ pending, migrations }) => {
   )
 }
 
-module.exports = function up({ journalTable, files, connection }) {
-  return begin(connection)
+module.exports = function up({ journalTable, files, connectionVar }) {
+  return begin(connectionVar)
     .then(client => bootstrap(client, journalTable, files)
         .then(readPending())
         .then(apply(client, journalTable))

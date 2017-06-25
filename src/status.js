@@ -2,8 +2,8 @@ const { red, green, cyan, white } = require('chalk')
 const { log, begin, commit, rollback, bootstrap, logError } = require('./helpers')
 const { readPending } = require('./up')
 
-module.exports = function status({ files, journalTable, connection }) {
-  return begin(connection)
+module.exports = function status({ files, journalTable, connectionVar }) {
+  return begin(connectionVar)
     .then(client => bootstrap(client, journalTable, files)
         .then(readPending())
         .then(({ pending }) => {
