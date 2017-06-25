@@ -85,13 +85,15 @@ The directory in your project that `pg-bump` will use to generate and read `.sql
 ```bash
 project/
 ├─ node_modules/
-├─ migrations/
+├─ migrations/ <--
 ├─ package.json
 ├─ .env
 └─ .pgbumprc
 ```
 
-### Example `package.json`
+### Example
+
+##### `package.json`
 
 ```json
 {
@@ -118,7 +120,7 @@ project/
 }
 ```
 
-### Example `.pgbumprc`
+##### `.pgbumprc`
 
 ```json
 {

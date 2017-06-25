@@ -2,27 +2,28 @@
   "name": "pg-bump",
   "version": "1.0.0",
   "description": "An opinionated, minimalist SQL migration CLI for PostgreSQL.",
-  "main": "dist/",
+  "main": "build/",
   "engines": {
     "node": ">= 6.10.3"
   },
   "files": [
-    "dist/"
+    "build/"
   ],
   "bin": {
-    "pg-bump": "dist/cli.js"
+    "pg-bump": "build/cli.js"
   },
   "scripts": {
     "lint": "eslint src/",
     "test": "PGBUMP_ENV=test mocha -t 5000 -r dotenv/config src/*.test.js",
     "tdd": "npm t -s -- -w -R min",
-    "copy": "ncp src/ dist/ --filter='^(?!.*test)'",
-    "clean": "rimraf dist/",
+    "copy": "ncp src/ build/ --filter='^(?!.*test)'",
+    "clean": "rimraf build/",
     "cover": "nyc npm t -s",
     "check": "nyc check-coverage",
     "build": "run-s -s clean copy",
     "precommit": "run-s -s lint",
-    "prepush": "run-s -s cover check"
+    "prepush": "run-s -s cover check",
+    "prepublishOnly": "run-s -s build"
   },
   "dependencies": {
     "chalk": "^1.1.3",
