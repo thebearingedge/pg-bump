@@ -1,38 +1,39 @@
 {
   "name": "pg-bump",
   "version": "1.0.0",
-  "description": "A Node.js CLI for PostgreSQL migrations.",
-  "main": "dist/",
+  "description": "An opinionated, minimalist SQL migration CLI for PostgreSQL.",
+  "main": "build/",
   "engines": {
     "node": ">= 6.10.3"
   },
   "files": [
-    "dist/"
+    "build/"
   ],
   "bin": {
-    "pg-bump": "dist/cli.js"
+    "pg-bump": "build/cli.js"
   },
   "scripts": {
     "lint": "eslint src/",
     "test": "PGBUMP_ENV=test mocha -t 5000 -r dotenv/config src/*.test.js",
     "tdd": "npm t -s -- -w -R min",
-    "copy": "ncp src/ dist/ --filter='^(?!.*test)'",
-    "clean": "rimraf dist/",
+    "copy": "ncp src/ build/ --filter='^(?!.*test)'",
+    "clean": "rimraf build/",
     "cover": "nyc npm t -s",
     "check": "nyc check-coverage",
     "build": "run-s -s clean copy",
     "precommit": "run-s -s lint",
-    "prepush": "run-s -s cover check"
+    "prepush": "run-s -s cover check",
+    "prepublishOnly": "run-s -s build"
   },
   "dependencies": {
-    "chalk": "1.1.3",
-    "fs-extra": "3.0.1",
-    "pg": "6.4.0",
-    "yargs": "8.0.2"
+    "chalk": "^1.1.3",
+    "fs-extra": "^3.0.1",
+    "pg": "^6.4.0",
+    "yargs": "^8.0.2"
   },
   "devDependencies": {
     "chai": "4.0.2",
-    "dotenv": "4.0.0",
+    "dotenv": "^4.0.0",
     "husky": "0.14.1",
     "eslint": "4.1.0",
     "mocha": "3.4.2",
@@ -41,11 +42,16 @@
     "nyc": "11.0.2",
     "rimraf": "2.6.1"
   },
+  "peerDependencies": {
+    "dotenv": "^4.0.0"
+  },
   "keywords": [
     "postgresql",
     "database",
     "schema",
-    "migrations"
+    "migrations",
+    "sql",
+    "cli"
   ],
   "author": "Tim Davis",
   "license": "MIT",
