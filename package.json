@@ -39,7 +39,7 @@
     "mocha": "3.4.2",
     "ncp": "2.0.0",
     "npm-run-all": "4.0.2",
-    "nyc": "11.0.2",
+    "nyc": "11.0.3",
     "rimraf": "2.6.1"
   },
   "peerDependencies": {
