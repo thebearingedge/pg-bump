@@ -34,7 +34,7 @@
   "devDependencies": {
     "chai": "4.0.2",
     "dotenv": "^4.0.0",
-    "husky": "0.14.2",
+    "husky": "0.14.3",
     "eslint": "4.1.1",
     "mocha": "3.4.2",
     "ncp": "2.0.0",
