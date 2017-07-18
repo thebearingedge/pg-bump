@@ -28,7 +28,7 @@
   "dependencies": {
     "chalk": "^2.0.0",
     "fs-extra": "^3.0.1",
-    "pg": "^6.4.0",
+    "pg": "^7.0.0",
     "yargs": "^8.0.2"
   },
   "devDependencies": {
