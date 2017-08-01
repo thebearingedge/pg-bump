@@ -28,7 +28,45 @@ It is possible to install `pg-bump` globally, but it's not recommended.
 λ npm i -g pg-bump
 ```
 
-### Usage
+### Creating a Migration
+
+The `pg-bump create` command generates a new `.sql` migration file in your migrations directory (defaults to `./migrations`).
+
+```bash
+λ pg-bump create create_table_users
+```
+
+##### `./migrations/<unix-time-in-ms>_create_table_users.sql`
+
+```sql
+-- up
+
+---
+
+-- down
+```
+
+The file is split into two sections, `up`, and `down`, separated by a `---` three-dash SQL comment. The separator comment is used by `pg-bump` to determine which section of code to execute while applying (`up`) or reverting (`down`) migrations. It is safe to delete the `up` and `down` comments, but the `---` separator should be preserved.
+
+##### `./migrations/<unix-time-in-ms>_create_table_users.sql`
+
+```sql
+-- up
+create table users (
+  id         serial,
+  username   text           unique not null,
+  created_at timestamptz(6) not null default now(),
+  primary (id)
+);
+
+---
+
+-- down
+drop table users;
+```
+
+
+### Commands
 
 ```bash
 pg-bump <command> [args]
@@ -53,7 +91,7 @@ Options:
 
 ### `.pgbumprc`
 
-`pg-bump` will attempt to find an optional `.pgbumprc` configuration file in the root of `process.cwd()`. Here is an example with default settings:
+`pg-bump` will attempt to find an optional `.pgbumprc` configuration file in the root of the current working directory. Here is an example with default settings:
 
 ```json
 {
