@@ -1,6 +1,6 @@
 {
   "name": "pg-bump",
-  "version": "1.0.1",
+  "version": "1.0.3",
   "description": "An opinionated, minimalist SQL migration CLI for PostgreSQL.",
   "main": "build/",
   "engines": {
@@ -27,8 +27,8 @@
   },
   "dependencies": {
     "chalk": "^2.0.0",
-    "fs-extra": "^4.0.0",
-    "pg": "^7.0.0",
+    "fs-extra": "^4.0.1",
+    "pg": "^7.0.2",
     "yargs": "^8.0.2"
   },
   "devDependencies": {
