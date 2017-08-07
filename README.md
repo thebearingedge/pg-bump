@@ -103,7 +103,7 @@ Options:
 
 #### `config.connectionVar`
 
-The environment variable that `pg-bump` will use to connect to your PostgreSQL server. Defaults to `DATABASE_URL`. Should you forgo configuring a `connectionVar` and/or exporting an environment variable, `pg-bump` will attempt to connect using the [`pg` module's default behavior](https://github.com/brianc/node-postgres/wiki/Client#new-client-client). You should be using [`dotenv`](https://www.npmjs.com/package/dotenv), so if you include some `connectionVar`, e.g. `POSTGRESL_URL`, in your `.env` file, `pg-bump` use that to connect.
+The environment variable that `pg-bump` will use to connect to your PostgreSQL server. Defaults to `DATABASE_URL`. Should you forgo configuring a `connectionVar` and/or exporting an environment variable, `pg-bump` will attempt to connect using the [`pg` module's default behavior](https://github.com/brianc/node-postgres/wiki/Client#new-client-client). You should be using [`dotenv`](https://www.npmjs.com/package/dotenv), so if you include a `connectionVar`, e.g. `POSTGRESL_URL`, in your `.env` file, then `pg-bump` will use it to connect to PostgreSQL.
 
 #### `config.journalTable`
 
