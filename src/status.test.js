@@ -1,7 +1,7 @@
 const path = require('path')
 const fs = require('fs-extra')
 const { Client } = require('pg')
-const { describe, beforeEach, it, expect } = require('./__test__')
+const { describe, beforeEach, afterEach, it, expect } = require('./__test__')
 const status = require('./status')
 
 describe('status()', () => {
@@ -26,6 +26,8 @@ describe('status()', () => {
       client.query(`drop table ${table_name} cascade`)
     )))
   })
+
+  afterEach(() => client.end())
 
   it('reports a list of pending migrations', () => {
     const fileName = `${Date.now()}_books.sql`
