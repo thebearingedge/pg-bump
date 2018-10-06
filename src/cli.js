@@ -1,5 +1,4 @@
 #! /usr/bin/env node
-require('dotenv/config')
 const yargs = require('yargs')
 const fs = require('fs-extra')
 const { create, up, down, status } = require('.')
@@ -12,6 +11,16 @@ yargs
     config: true,
     configParser: path => fs.readJsonSync(path, { throws: false }),
     describe: 'Relative path to optional configuration file.'
+  })
+  .option('require', {
+    alias: 'r',
+    describe: 'Require the given module.',
+    coerce: /* istanbul ignore next */ hooks => {
+      const cwd = process.cwd()
+      Array.isArray(hooks)
+        ? hooks.forEach(hook => require(require.resolve(hook, { paths: [cwd] })))
+        : require(require.resolve(hooks, { paths: [cwd] }))
+    }
   })
   .option('connectionVar', {
     alias: 'c',

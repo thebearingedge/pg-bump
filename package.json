@@ -84,9 +84,6 @@
     "nyc": "13.0.1",
     "rimraf": "2.6.2"
   },
-  "peerDependencies": {
-    "dotenv": "^5.0.0"
-  },
   "keywords": [
     "postgresql",
     "database",
