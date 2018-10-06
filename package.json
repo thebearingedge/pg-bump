@@ -18,6 +18,15 @@
       "pre-push": "run-s -s cover check"
     }
   },
+  "eslintConfig": {
+    "extends": [
+      "eslint:recommended"
+    ],
+    "env": {
+      "node": true,
+      "es6": true
+    }
+  },
   "scripts": {
     "db:start": "docker-compose up --build -d",
     "db:stop": "docker-compose down",
