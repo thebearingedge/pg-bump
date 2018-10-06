@@ -1,6 +1,6 @@
 {
   "name": "pg-bump",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "An opinionated, minimalist SQL migration CLI for PostgreSQL.",
   "main": "build/",
   "engines": {
