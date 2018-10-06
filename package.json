@@ -13,6 +13,8 @@
     "pg-bump": "build/cli.js"
   },
   "scripts": {
+    "db:start": "docker-compose up --build -d",
+    "db:stop": "docker-compose down",
     "lint": "eslint src/",
     "test": "PGBUMP_ENV=test mocha -t 5000 -r dotenv/config src/*.test.js",
     "tdd": "npm t -s -- -w -R min",
