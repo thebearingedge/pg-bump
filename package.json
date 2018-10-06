@@ -12,9 +12,15 @@
   "bin": {
     "pg-bump": "build/cli.js"
   },
+  "lint-staged": {
+    "*.js": [
+      "eslint --fix",
+      "git add"
+    ]
+  },
   "husky": {
     "hooks": {
-      "pre-commit": "run-s -s lint",
+      "pre-commit": "lint-staged",
       "pre-push": "run-s -s cover check"
     }
   },
@@ -51,6 +57,7 @@
     "dotenv": "6.0.0",
     "eslint": "5.6.1",
     "husky": "1.1.1",
+    "lint-staged": "7.3.0",
     "mocha": "5.2.0",
     "ncp": "2.0.0",
     "npm-run-all": "4.1.3",
