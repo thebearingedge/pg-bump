@@ -6,6 +6,7 @@ const { create, up, down, status } = require('.')
 
 yargs
   .usage('$0 <command> [args]')
+  .pkgConf('pgBump')
   .option('config', {
     default: '.pgbumprc',
     config: true,
