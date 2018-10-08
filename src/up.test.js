@@ -54,7 +54,8 @@ describe('up()', () => {
 
   it('executes migration scripts in order', () => {
     const now = Date.now()
-    const authorsPath = path.join(filesDir, `${now}_authors.sql`)
+    const authorsFile = `${now}_authors.sql`
+    const authorsPath = path.join(filesDir, authorsFile)
     fs.writeFileSync(authorsPath, `
       create table authors (
         author_id   serial,
@@ -62,7 +63,8 @@ describe('up()', () => {
         primary key (author_id)
       );
     `)
-    const booksPath = path.join(filesDir, `${now + 1}_books.sql`)
+    const booksFile = `${now + 1}_books.sql`
+    const booksPath = path.join(filesDir, booksFile)
     fs.writeFileSync(booksPath, `
       create table books (
         book_id    serial,
@@ -72,12 +74,19 @@ describe('up()', () => {
                 references authors (author_id)
       );
     `)
+    const fileNames = [authorsFile, booksFile]
     return up({ files, journalTable })
       .then(() => client.query(`
-        select *
-          from authors
-          join books using (author_id)
+        select version, file_name
+          from ${journalTable}
+         order by version asc
       `))
+      .then(({ rows }) => {
+        rows.forEach(({ version, file_name }, i) => {
+          expect(version).to.equal(i + 1)
+          expect(file_name).to.equal(fileNames[i])
+        })
+      })
   })
 
   it('only executes the "up" portion of migration scripts', () => {

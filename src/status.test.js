@@ -55,8 +55,8 @@ describe('status()', () => {
     `)
     return status({ files, journalTable })
       .then(() => client.query(`
-        insert into schema_journal (file_name)
-        values ('${createBooks}')
+        insert into schema_journal (version, file_name)
+        values (1, '${createBooks}')
       `))
       .then(() => fs.writeFileSync(path.join(filesDir, `${now - 1}_authors.sql`), `
         create table authors (
@@ -87,8 +87,8 @@ describe('status()', () => {
     `)
     return status({ files, journalTable })
       .then(() => client.query(`
-        insert into schema_journal (file_name)
-        values ('${createBooks}'), ('${Date.now()}_authors.sql')
+        insert into schema_journal (version, file_name)
+        values (1, '${createBooks}'), (2, '${Date.now()}_authors.sql')
       `))
       .then(() => status({ files, journalTable }))
       .catch(err => err)

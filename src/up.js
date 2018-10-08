@@ -21,8 +21,12 @@ const apply = (client, journalTable) => ({ pending, migrations }) => {
     client
       .query(migration)
       .then(() => client.query(`
-        insert into ${journalTable} (file_name)
-        values ('${pending[i]}')
+        with schema_version as (
+          select (count(*) + 1) as next
+            from ${journalTable}
+        )
+        insert into ${journalTable} (version, file_name)
+        values ((select next from schema_version), '${pending[i]}')
       `))
       .then(() => log(cyan('applied:'), white(pending[i])))
       .catch(err => Promise.reject(Object.assign(err, {
