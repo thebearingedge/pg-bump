@@ -1,29 +1,26 @@
 {
   "name": "pg-bump",
-  "version": "2.1.0",
+  "version": "3.0.0-beta.3",
   "description": "An opinionated, minimalist SQL migration CLI for PostgreSQL.",
-  "main": "build/",
+  "main": "index.js",
   "engines": {
     "node": ">= 6.10.3"
   },
   "files": [
-    "build/"
+    "index.js",
+    "lib/*.js",
+    "!**/*test*"
   ],
   "bin": {
-    "pg-bump": "build/cli.js"
+    "pg-bump": "lib/cli.js"
   },
   "scripts": {
     "db:start": "docker-compose up --build -d",
     "db:stop": "docker-compose down",
-    "lint": "eslint src/",
-    "test": "PGBUMP_ENV=test mocha -t 5000 -r dotenv/config src/*.test.js",
+    "test": "PGBUMP_ENV=test mocha -t 5000 -r dotenv/config lib/*.test.js",
     "tdd": "npm t -s -- -w -R min",
-    "copy": "ncp src/ build/ --filter='^(?!.*test)'",
-    "clean": "rimraf build/",
     "cover": "nyc npm t -s",
-    "check": "nyc check-coverage",
-    "build": "run-s -s clean copy",
-    "prepublishOnly": "run-s -s build"
+    "check": "nyc check-coverage"
   },
   "lint-staged": {
     "*.js": [
@@ -57,10 +54,10 @@
       "text-summary"
     ],
     "include": [
-      "src/**/*.js"
+      "lib/**/*.js"
     ],
     "exclude": [
-      "src/**/*.test.js",
+      "lib/**/*.test.js",
       "**/__test__.js",
       "**/index.js",
       "**/log.js"
@@ -79,10 +76,8 @@
     "husky": "1.1.1",
     "lint-staged": "7.3.0",
     "mocha": "5.2.0",
-    "ncp": "2.0.0",
     "npm-run-all": "4.1.3",
-    "nyc": "13.0.1",
-    "rimraf": "2.6.2"
+    "nyc": "13.0.1"
   },
   "keywords": [
     "postgresql",
