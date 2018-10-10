@@ -44,7 +44,18 @@
     "env": {
       "node": true,
       "es6": true
-    }
+    },
+    "overrides": [
+      {
+        "files": [
+          "**/*.test.js",
+          "**/__test__.js"
+        ],
+        "env": {
+          "mocha": true
+        }
+      }
+    ]
   },
   "nyc": {
     "all": true,
@@ -54,6 +65,7 @@
     "branches": 100,
     "reporter": [
       "lcov",
+      "html",
       "text-summary"
     ],
     "include": [
