@@ -1,6 +1,6 @@
 {
   "name": "pg-bump",
-  "version": "3.0.0-beta.3",
+  "version": "3.0.0-beta.4",
   "description": "An opinionated, minimalist SQL migration CLI for PostgreSQL.",
   "main": "index.js",
   "engines": {
@@ -9,7 +9,8 @@
   "files": [
     "index.js",
     "lib/*.js",
-    "!**/*test*"
+    "!**/*test*",
+    "lib/__template__.sql"
   ],
   "bin": {
     "pg-bump": "lib/cli.js"
