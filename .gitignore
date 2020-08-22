@@ -1,3 +1,4 @@
+docker-compose.override.yml
 node_modules/
 .nyc_output/
 .DS_Store

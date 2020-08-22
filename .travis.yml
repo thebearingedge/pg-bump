@@ -1,6 +1,5 @@
 language: node_js
-node_js:
-  - 6.10.3
+node_js: 10
 services: postgresql
 install:
   - npm install

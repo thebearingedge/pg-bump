@@ -173,3 +173,24 @@ project/
 ```bash
 POSTGRES_URL=postgres://127.0.0.1:5432/postgres-app
 ```
+
+### Development
+
+##### Environment Variables
+
+After cloning the project repository, you'll need a `.env` file in the root of the project. See `.env.example`.
+
+##### Docker
+
+[`docker-compose`](https://docs.docker.com/compose/) can be used to start and stop a local PostgreSQL instance if you don't have a server running on your machine. If necessary, you can [override](https://docs.docker.com/compose/extends/#understanding-multiple-compose-files) `docker-compose.yml`.
+
+##### Scripts
+
+```bash
+# spin up a PostgreSQL server
+npm run db:start
+# run the tests
+npm test
+# tear the server down
+npm run db:stop
+```
