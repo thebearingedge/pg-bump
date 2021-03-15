@@ -7,3 +7,5 @@ migrations/
 build/
 *.log
 .env
+ca/*
+!ca/.gitkeep
