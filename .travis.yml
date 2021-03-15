@@ -3,6 +3,7 @@ node_js: 10
 services: postgresql
 install:
   - npm install
+  - npm run keygen
 before_script:
   - psql -c 'create database "pg-bump";' -U postgres
 script:
