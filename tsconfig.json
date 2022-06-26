@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "noEmit": true,
+    "moduleResolution": "node",
+  },
+  "include": [
+    "src/",
+    "rollup.config.ts"
+  ],
+  "ts-node": {
+    "swc": true
+  }
+}

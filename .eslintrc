@@ -1,0 +1,36 @@
+{
+  "root": true,
+  "ignorePatterns": [
+    "dist/",
+    "coverage/"
+  ],
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "project": "./tsconfig.json"
+  },
+  "plugins": [
+    "@typescript-eslint"
+  ],
+  "extends": [
+    "standard-with-typescript"
+  ],
+  "rules": {
+    "no-console": [
+      "error",
+      {
+        "allow": [
+          "error"
+        ]
+      }
+    ],
+    "@typescript-eslint/consistent-type-definitions": "off",
+    "@typescript-eslint/space-before-function-paren": [
+      "error",
+      {
+        "anonymous": "always",
+        "named": "never",
+        "asyncArrow": "always"
+      }
+    ]
+  }
+}

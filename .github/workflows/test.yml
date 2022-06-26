@@ -1,0 +1,32 @@
+name: Test
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [14.x, 16.x, 18.x]
+        include:
+          - node-version: 18.x
+            env:
+              COVERAGE: 1
+    steps:
+      - name: Setup
+        uses: actions/checkout@v2
+      - name: Run on Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version }}
+      - run: npm ci
+      - run: npm run build
+      - run: npm run cover
+      - name: Publish Coverage Report
+        if: ${{ matrix.env.COVERAGE }}
+        uses: codecov/codecov-action@v1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
