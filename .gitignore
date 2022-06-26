@@ -1,9 +1,6 @@
-docker-compose.override.yml
 node_modules/
-.nyc_output/
 .DS_Store
 coverage/
-migrations/
-build/
+dist/
 *.log
 .env
