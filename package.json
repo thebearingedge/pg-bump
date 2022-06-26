@@ -10,8 +10,12 @@
       "require": "./dist/cjs/index.js"
     }
   },
-  "types": "dist/index.d.ts",
+  "bin": {
+    "pg-bump": "./bin/index.js"
+  },
+  "types": "./dist/index.d.ts",
   "files": [
+    "bin/",
     "dist/"
   ],
   "scripts": {

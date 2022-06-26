@@ -1,19 +1,22 @@
 import typescript from '@rollup/plugin-typescript'
 
 export default {
-  input: 'src/index.ts',
+  input: {
+    cli: 'src/cli.ts',
+    index: 'src/index.ts'
+  },
   output: [
     {
-      file: 'dist/cjs/index.js',
+      dir: 'dist/cjs',
       format: 'cjs',
       exports: 'auto'
     },
     {
-      file: 'dist/esm/index.js',
+      dir: 'dist/esm',
       format: 'esm'
     }
   ],
   plugins: [
-    typescript({ exclude: ['src/**/*.test.ts'] })
+    typescript({ target: 'es2017', exclude: ['src/**/*.test.ts'] })
   ]
 }
