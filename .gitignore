@@ -1,6 +1,8 @@
 node_modules/
-.DS_Store
+migrations/*
+!migrations/.gitkeep
 coverage/
 dist/
+.DS_Store
 *.log
 .env

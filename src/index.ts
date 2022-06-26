@@ -1,1 +1,1 @@
-export default (): string => 'yass'
+export { default as createMigration } from './create-migration'

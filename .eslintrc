@@ -23,6 +23,12 @@
         ]
       }
     ],
+    "padded-blocks": [
+      "error",
+      {
+        "classes": "always"
+      }
+    ],
     "@typescript-eslint/consistent-type-definitions": "off",
     "@typescript-eslint/space-before-function-paren": [
       "error",
