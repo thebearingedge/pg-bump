@@ -16,7 +16,7 @@ export default function createMigration(options: CreateMigrationOptions): string
 
   const log = createLogger({ silent })
 
-  log.info(chalk.red('[pg-bump]'), chalk.green('creating migration file...'))
+  log.prefix().info(chalk.green('creating migration files...'))
 
   const timestamp = Date.now().toString()
   const directoryName = `${timestamp}_${script}`

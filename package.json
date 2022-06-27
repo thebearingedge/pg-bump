@@ -14,6 +14,7 @@
     "test": "mocha",
     "tdd": "mocha -w -R min",
     "cover": "c8 -r text -r html -r lcov mocha",
+    "demo": "node -r dotenv/config -r ts-node/register src/cli.ts --",
     "build": "tsc -p tsconfig.prod.json",
     "prepare": "husky install",
     "prepack": "npm run build"
@@ -25,6 +26,7 @@
     "@types/node": "^18.0.0",
     "c8": "^7.11.3",
     "chai": "^4.3.6",
+    "dotenv": "^16.0.1",
     "eslint": "^7.32.0",
     "eslint-config-standard-with-typescript": "^21.0.1",
     "husky": "^8.0.1",
@@ -61,6 +63,7 @@
   ],
   "dependencies": {
     "chalk": "^4.1.2",
-    "commander": "^9.3.0"
+    "commander": "^9.3.0",
+    "postgres": "^3.2.4"
   }
 }
