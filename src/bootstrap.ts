@@ -1,7 +1,5 @@
 import fs from 'fs'
-import chalk from 'chalk'
 import { Sql } from 'postgres'
-import createLogger from './create-logger'
 
 export type BootstrapOptions = {
   sql: Sql<{}>
@@ -11,26 +9,28 @@ export type BootstrapOptions = {
 }
 
 export type BootstrapResults = {
-  applied: string[]
+  schemaTable: string
+  synced: string[]
   pending: string[]
   missing: string[]
   untracked: string[]
+  isCorrupt: boolean
+  isSynchronized: boolean
+  isSchemaTableNew: boolean
 }
 
 type Created = { version: number }
-type Applied = { migration: string }
+type Synced = { migration: string }
 
-export async function bootstrap(options: BootstrapOptions): Promise<BootstrapResults> {
+export default async function bootstrap(options: BootstrapOptions): Promise<BootstrapResults> {
 
-  const { sql, files, journalTable, silent = true } = options
-
-  const log = createLogger({ silent })
+  const { sql, files, journalTable } = options
 
   const [table, schema = 'public'] = journalTable.split('.').reverse()
 
   const schemaTable = `${wrapIdentifier(schema)}.${wrapIdentifier(table)}`
 
-  const [, created, appliedMigrations] = await sql.unsafe<[unknown, Created[], Applied[]]>(`
+  const [, created, applied] = await sql.unsafe<[unknown, Created[], Synced[]]>(`
     set client_min_messages to warning;
 
     create table if not exists ${schemaTable} (
@@ -53,9 +53,7 @@ export async function bootstrap(options: BootstrapOptions): Promise<BootstrapRes
      order by version;
   `)
 
-  if (created.length !== 0) {
-    log.info(chalk.red('[pg-bump]', chalk.green(`created ${schemaTable}`)))
-  }
+  const isSchemaTableNew = created.length !== 0
 
   fs.mkdirSync(files, { recursive: true })
 
@@ -64,23 +62,38 @@ export async function bootstrap(options: BootstrapOptions): Promise<BootstrapRes
     .map(({ name }) => name)
     .sort()
 
-  const applied = appliedMigrations.map(({ migration }) => migration)
-  const appliedSet = new Set(applied)
+  const synced = applied.map(({ migration }) => migration)
+  const syncedSet = new Set(synced)
 
-  const isSynchronized = known.length === applied.length &&
-                         known.every(migration => appliedSet.has(migration))
+  const isSynchronized = known.length === synced.length &&
+                         known.every(migration => syncedSet.has(migration))
 
-  if (isSynchronized) return { applied, pending: [], missing: [], untracked: [] }
+  if (isSynchronized) {
+    return {
+      synced,
+      pending: [],
+      missing: [],
+      untracked: [],
+      schemaTable,
+      isCorrupt: false,
+      isSynchronized,
+      isSchemaTableNew
+    }
+  }
 
   const knownSet = new Set(known)
 
-  const pending = known.filter(migration => !appliedSet.has(migration))
-  const missing = applied.filter(migration => !knownSet.has(migration))
+  const pending = known.filter(migration => !syncedSet.has(migration))
+  const missing = synced.filter(migration => !knownSet.has(migration))
   const untracked = known
-    .slice(0, applied.length - missing.length)
-    .filter(migration => !appliedSet.has(migration))
+    .slice(0, synced.length - missing.length)
+    .filter(migration => !syncedSet.has(migration))
 
-  return { applied, missing, pending, untracked }
+  const isCorrupt = missing.length !== 0 && untracked.length !== 0
+
+  return {
+    synced, missing, pending, untracked, schemaTable, isCorrupt, isSynchronized, isSchemaTableNew
+  }
 }
 
 function wrapIdentifier(identifier: string): string {

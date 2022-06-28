@@ -10,19 +10,22 @@ type LoggerOptions = {
   silent?: boolean
 }
 
+const { log, error } = console
+
 export default function createLogger({ silent = true }: LoggerOptions): Logger {
   return {
     prefix(): Logger {
+      if (silent) return this
       process.stdout.write(chalk.red('[pg-bump]') + ' ')
       return this
     },
     info(...args: any[]): void {
       if (silent) return
-      console.log(...args) // eslint-disable-line no-console
+      log(...args)
     },
     error(...args: any[]): void {
       if (silent) return
-      console.error(...args)
+      error(...args)
     }
   }
 }

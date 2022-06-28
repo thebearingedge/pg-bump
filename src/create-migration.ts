@@ -1,7 +1,5 @@
 import fs from 'fs'
 import path from 'path'
-import chalk from 'chalk'
-import createLogger from './create-logger'
 
 type CreateMigrationOptions = {
   files: string
@@ -11,23 +9,15 @@ type CreateMigrationOptions = {
 
 export default function createMigration(options: CreateMigrationOptions): string {
 
-  /* c8 ignore next */
-  const { files, script, silent = true } = options
-
-  const log = createLogger({ silent })
-
-  log.prefix().info(chalk.green('creating migration files...'))
+  const { files, script } = options
 
   const timestamp = Date.now().toString()
-  const directoryName = `${timestamp}_${script}`
-  const directoryPath = path.resolve(process.cwd(), path.join(files, directoryName))
+  const migration = `${timestamp}_${script}`
+  const migrationPath = path.resolve(process.cwd(), path.join(files, migration))
 
-  fs.mkdirSync(directoryPath, { recursive: true })
-  fs.closeSync(fs.openSync(path.join(directoryPath, 'up.sql'), 'w'))
-  fs.closeSync(fs.openSync(path.join(directoryPath, 'down.sql'), 'w'))
+  fs.mkdirSync(migrationPath, { recursive: true })
+  fs.closeSync(fs.openSync(path.join(migrationPath, 'up.sql'), 'w'))
+  fs.closeSync(fs.openSync(path.join(migrationPath, 'down.sql'), 'w'))
 
-  log.info(chalk.cyan('created:'), chalk.white(path.join(directoryName, 'up.sql')))
-  log.info(chalk.cyan('created:'), chalk.white(path.join(directoryName, 'down.sql')))
-
-  return directoryName
+  return migration
 }

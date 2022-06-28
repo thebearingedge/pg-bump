@@ -1,10 +1,10 @@
-import { bootstrap, BootstrapResults, BootstrapOptions } from './lib'
+import bootstrap, { BootstrapResults, BootstrapOptions } from './bootstrap'
 
-type StatusOptions = BootstrapOptions & {
+export type StatusOptions = BootstrapOptions & {
 
 }
 
-type StatusResults = Pick<BootstrapResults, 'applied' | 'pending' | 'missing' | 'untracked'>
+export type StatusResults = BootstrapResults
 
 export default async function status(options: StatusOptions): Promise<StatusResults> {
   const results = await bootstrap(options)
