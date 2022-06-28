@@ -4,8 +4,9 @@ import chalk from 'chalk'
 import postgres from 'postgres'
 import { program } from 'commander'
 import up from './up'
-import withSql from './with-sql'
+import down from './down'
 import create from './create'
+import withSql from './with-sql'
 import bootstrap from './bootstrap'
 import createLogger from './create-logger'
 import MigrationError from './migration-error'
@@ -81,6 +82,42 @@ program
   })
 
 program
+  .command('down')
+  .description('revert synced migrations')
+  .option('--to <migration>', 'revert to <migration>')
+  .option('-t, --transaction', 'wrap migrations in a transaction', true)
+  .action(async () => {
+    const { envVar, transaction, ...options } = loadConfig(program.opts<PgBumpOptions>())
+    const log = createLogger(options)
+    const sql = postgres(process.env[envVar] ?? '')
+    const { isCorrupt, ...results } = await withSql({ sql, transaction }, async sql => {
+      try {
+        return await down({ sql, ...options })
+      } catch (err) {
+        if (!(err instanceof MigrationError)) throw err
+        log.prefix().error(printMigrationErrorReport(err))
+        process.exit(1)
+      }
+    })
+    if (isCorrupt) {
+      const { missing, untracked } = results
+      log.prefix().error(printCorruptionReport(missing, untracked))
+      process.exit(1)
+    }
+    const { isSchemaTableNew, schemaTable } = results
+    if (isSchemaTableNew) log.prefix().info(chalk.green(`created ${schemaTable}`))
+    const { reverted } = results
+    if (reverted.length === 0) {
+      log.prefix().info(chalk.green('already at base migration'))
+    } else {
+      const pluralized = reverted.length === 1 ? 'migration' : 'migrations'
+      log.prefix().info(chalk.green(`reverted ${reverted.length} ${pluralized}`))
+      reverted.forEach(migration => log.info(chalk.cyan('reverted:'), chalk.white(migration)))
+    }
+    void sql.end()
+  })
+
+program
   .command('status')
   .description('show pending migrations')
   .action(async () => {
@@ -129,8 +166,8 @@ function printCorruptionReport(missing: string[], untracked: string[]): string {
 
 function printMigrationErrorReport(err: MigrationError): string {
   return [
-    chalk.red('ABORTED:', chalk.white(err.message)),
-    chalk.bold(err.file, 'line', err.line),
+    chalk.red('ABORTED:', chalk.white(err.message, '\n')),
+    chalk.bold(err.file, 'line', err.line, '\n'),
     chalk.yellow(err.script, '\n')
   ].join('\n')
 }

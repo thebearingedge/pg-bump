@@ -14,7 +14,7 @@
     "test": "mocha",
     "tdd": "mocha -w -R min",
     "cover": "c8 -r text -r html -r lcov mocha",
-    "demo": "node -r dotenv/config -r ts-node/register src/cli.ts --",
+    "demo": "node -r dotenv/config -r ts-node/register src/cli.ts",
     "build": "tsc -p tsconfig.prod.json",
     "prepare": "husky install",
     "prepack": "npm run build"
