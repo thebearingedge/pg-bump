@@ -1,9 +1,9 @@
 import fs from 'fs'
 import path from 'path'
 import { expect } from 'chai'
-import createMigration from './create-migration'
+import create from './create'
 
-describe('createMigration', () => {
+describe('create', () => {
 
   const files = './migrations'
 
@@ -15,7 +15,7 @@ describe('createMigration', () => {
   })
 
   it('creates a new migration script in a directory', () => {
-    const directoryName = createMigration({ script: 'create-table-foos', files: files })
+    const directoryName = create({ script: 'create-table-foos', files: files })
     const entries = fs.readdirSync(path.join(files, directoryName))
     expect(entries)
       .to.have.lengthOf(2)

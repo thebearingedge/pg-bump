@@ -5,9 +5,9 @@ import postgres from 'postgres'
 import { program } from 'commander'
 import up from './up'
 import withSql from './with-sql'
+import create from './create'
 import bootstrap from './bootstrap'
 import createLogger from './create-logger'
-import createMigration from './create-migration'
 import MigrationError from './migration-error'
 
 type PgBumpOptions = {
@@ -41,7 +41,7 @@ program
     const options = loadConfig(program.opts<PgBumpOptions>())
     const log = createLogger(options)
     log.prefix().info(chalk.green('creating migration files...'))
-    const migration = createMigration({ ...options, script })
+    const migration = create({ ...options, script })
     log.info(chalk.cyan('created:'), chalk.white(path.join(migration, '{up,down}.sql')))
   })
 
@@ -57,13 +57,8 @@ program
       try {
         return await up({ sql, ...options })
       } catch (err) {
-        if (err instanceof MigrationError) {
-          log.prefix().error(chalk.red('ABORTED:'), chalk.white(err.message), '\n')
-          log.error(chalk.bold(err.file, 'line', err.line), '\n')
-          log.error(chalk.yellow(err.script), '\n')
-        } else {
-          console.error(err)
-        }
+        if (!(err instanceof MigrationError)) throw err
+        log.prefix().error(printMigrationErrorReport(err))
         process.exit(1)
       }
     })
@@ -71,19 +66,16 @@ program
       const { missing, untracked } = results
       log.prefix().error(printCorruptionReport(missing, untracked))
       process.exit(1)
+    }
+    const { isSchemaTableNew, schemaTable } = results
+    if (isSchemaTableNew) log.prefix().info(chalk.green(`created ${schemaTable}`))
+    const { applied } = results
+    if (applied.length === 0) {
+      log.prefix().info(chalk.green('already up to date'))
     } else {
-      const { isSchemaTableNew, schemaTable } = results
-      if (isSchemaTableNew) {
-        log.prefix().info(chalk.green(`created ${schemaTable}`))
-      }
-      const { applied } = results
-      if (applied.length > 0) {
-        const pluralized = applied.length === 1 ? 'migration' : 'migrations'
-        log.prefix().info(chalk.green(`applied ${applied.length} ${pluralized}`))
-        applied.forEach(migration => log.info(chalk.cyan('applied:'), chalk.white(migration)))
-      } else {
-        log.prefix().info(chalk.green('already up to date'))
-      }
+      const pluralized = applied.length === 1 ? 'migration' : 'migrations'
+      log.prefix().info(chalk.green(`applied ${applied.length} ${pluralized}`))
+      applied.forEach(migration => log.info(chalk.cyan('applied:'), chalk.white(migration)))
     }
     void sql.end()
   })
@@ -120,10 +112,10 @@ program
 program.parse()
 
 function loadConfig({ config: configPath, ...defaults }: PgBumpOptions): PgBumpOptions {
-  const options = fs.statSync(configPath, { throwIfNoEntry: false }) != null
+  const loaded = fs.statSync(configPath, { throwIfNoEntry: false }) != null
     ? JSON.parse(fs.readFileSync(configPath, 'utf8'))
     : {}
-  return { ...defaults, ...options }
+  return { ...defaults, ...loaded }
 }
 
 function printCorruptionReport(missing: string[], untracked: string[]): string {
@@ -133,4 +125,12 @@ function printCorruptionReport(missing: string[], untracked: string[]): string {
     .map(({ status, migration }) => `${chalk.yellow(status)}: ${migration}`)
     .join('\n')
   return chalk.bold('\n\nMIGRATIONS CORRUPTED\n\n') + corrupted
+}
+
+function printMigrationErrorReport(err: MigrationError): string {
+  return [
+    chalk.red('ABORTED:', chalk.white(err.message)),
+    chalk.bold(err.file, 'line', err.line),
+    chalk.yellow(err.script, '\n')
+  ].join('\n')
 }
