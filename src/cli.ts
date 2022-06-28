@@ -53,7 +53,7 @@ program
   .action(async () => {
     const { envVar, transaction, ...options } = loadConfig(program.opts<PgBumpOptions>())
     const log = createLogger(options)
-    const sql = postgres(process.env[envVar] ?? '')
+    const sql = postgres(process.env[envVar] as string)
     const { isCorrupt, ...results } = await withSql({ sql, transaction }, async sql => {
       try {
         return await up({ sql, ...options })
@@ -71,13 +71,7 @@ program
     const { isSchemaTableNew, schemaTable } = results
     if (isSchemaTableNew) log.prefix().info(chalk.green(`created ${schemaTable}`))
     const { applied } = results
-    if (applied.length === 0) {
-      log.prefix().info(chalk.green('already up to date'))
-    } else {
-      const pluralized = applied.length === 1 ? 'migration' : 'migrations'
-      log.prefix().info(chalk.green(`applied ${applied.length} ${pluralized}`))
-      applied.forEach(migration => log.info(chalk.cyan('applied:'), chalk.white(migration)))
-    }
+    log.prefix().info(printUpReport(applied))
     void sql.end()
   })
 
@@ -89,7 +83,7 @@ program
   .action(async () => {
     const { envVar, transaction, ...options } = loadConfig(program.opts<PgBumpOptions>())
     const log = createLogger(options)
-    const sql = postgres(process.env[envVar] ?? '')
+    const sql = postgres(process.env[envVar] as string)
     const { isCorrupt, ...results } = await withSql({ sql, transaction }, async sql => {
       try {
         return await down({ sql, ...options })
@@ -107,13 +101,7 @@ program
     const { isSchemaTableNew, schemaTable } = results
     if (isSchemaTableNew) log.prefix().info(chalk.green(`created ${schemaTable}`))
     const { reverted } = results
-    if (reverted.length === 0) {
-      log.prefix().info(chalk.green('already at base migration'))
-    } else {
-      const pluralized = reverted.length === 1 ? 'migration' : 'migrations'
-      log.prefix().info(chalk.green(`reverted ${reverted.length} ${pluralized}`))
-      reverted.forEach(migration => log.info(chalk.cyan('reverted:'), chalk.white(migration)))
-    }
+    log.prefix().info(printDownReport(reverted))
     void sql.end()
   })
 
@@ -123,7 +111,7 @@ program
   .action(async () => {
     const { envVar, ...options } = loadConfig(program.opts<PgBumpOptions>())
     const log = createLogger(options)
-    const sql = postgres(process.env[envVar] ?? '')
+    const sql = postgres(process.env[envVar] as string)
     const { isCorrupt, ...results } = await bootstrap({ ...options, sql })
     if (isCorrupt) {
       const { missing, untracked } = results
@@ -134,14 +122,8 @@ program
       if (isSchemaTableNew) {
         log.prefix().info(chalk.green(`created ${schemaTable}`))
       }
-      const { isSynchronized, pending } = results
-      if (isSynchronized) {
-        log.prefix().info(chalk.green('migrations synced'))
-      } else {
-        const pluralized = pending.length === 1 ? 'migration' : 'migrations'
-        log.prefix().info(chalk.green(`found ${pending.length} pending ${pluralized}`))
-        pending.forEach(migration => log.info(chalk.cyan('pending:'), chalk.white(migration)))
-      }
+      const { pending } = results
+      log.prefix().info(printStatusReport(pending))
     }
     void sql.end()
   })
@@ -170,4 +152,40 @@ function printMigrationErrorReport(err: MigrationError): string {
     chalk.bold(err.file, 'line', err.line, '\n'),
     chalk.yellow(err.script, '\n')
   ].join('\n')
+}
+
+function printStatusReport(pending: string[]): string {
+  if (pending.length === 0) {
+    return chalk.green('migrations synced')
+  } else {
+    const pluralized = pending.length === 1 ? 'migration' : 'migrations'
+    return [
+      chalk.green(`found ${pending.length} pending ${pluralized}`),
+      ...pending.map(migration => chalk.cyan('pending:', chalk.white(migration)))
+    ].join('\n')
+  }
+}
+
+function printUpReport(applied: string[]): string {
+  if (applied.length === 0) {
+    return chalk.green('already up to date')
+  } else {
+    const pluralized = applied.length === 1 ? 'migration' : 'migrations'
+    return [
+      chalk.green(`applied ${applied.length} ${pluralized}`),
+      ...applied.map(migration => chalk.cyan('applied:', chalk.white(migration)))
+    ].join('\n')
+  }
+}
+
+function printDownReport(reverted: string[]): string {
+  if (reverted.length === 0) {
+    return chalk.green('already at base migration')
+  } else {
+    const pluralized = reverted.length === 1 ? 'migration' : 'migrations'
+    return [
+      chalk.green(`reverted ${reverted.length} ${pluralized}`),
+      ...reverted.map(migration => chalk.cyan('reverted:', chalk.white(migration)))
+    ].join('\n')
+  }
 }
