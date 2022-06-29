@@ -16,7 +16,6 @@ type PgBumpOptions = {
   silent: boolean
   files: string
   envVar: string
-  transaction: boolean
   journal: string
 }
 
@@ -49,12 +48,16 @@ program
 program
   .command('up')
   .description('apply pending migrations')
+  .option('--no-lock', 'disable advisory lock during migration')
+  .option('-l, --lock', 'acquire a advisory lock during migration', true)
+  .option('--no-transaction', 'do not run migrations in a transaction')
   .option('-t, --transaction', 'wrap migrations in a transaction', true)
-  .action(async options => {
-    const { envVar, transaction, ...opts } = loadConfig(program.opts<PgBumpOptions>())
+  .action(async (options: { lock: boolean, transaction: boolean }) => {
+    const { lock, transaction } = options
+    const { envVar, ...opts } = loadConfig(program.opts<PgBumpOptions>())
     const log = createLogger(opts)
     const sql = postgres(process.env[envVar] as string)
-    const { isCorrupt, ...results } = await withSql({ sql, transaction }, async sql => {
+    const { isCorrupt, ...results } = await withSql({ sql, lock, transaction }, async sql => {
       try {
         return await up({ sql, ...opts, ...options })
       } catch (err) {
@@ -79,13 +82,17 @@ program
 program
   .command('down')
   .description('revert synced migrations')
+  .option('--no-lock', 'disable advisory lock during migration')
+  .option('-l, --lock', 'acquire a advisory lock during migration', true)
+  .option('--no-transaction', 'do not run migrations in a transaction')
   .option('-t, --transaction', 'wrap migrations in a transaction', true)
   .addOption(new Option('--to <version>', 'revert to schema <version>').argParser(parseInt))
-  .action(async options => {
-    const { envVar, transaction, ...opts } = loadConfig(program.opts<PgBumpOptions>())
+  .action(async (options: { lock: boolean, transaction: boolean }) => {
+    const { envVar, ...opts } = loadConfig(program.opts<PgBumpOptions>())
+    const { lock, transaction } = options
     const log = createLogger(opts)
     const sql = postgres(process.env[envVar] as string)
-    const { isCorrupt, ...results } = await withSql({ sql, transaction }, async sql => {
+    const { isCorrupt, ...results } = await withSql({ sql, lock, transaction }, async sql => {
       try {
         return await down({ sql, ...opts, ...options })
       } catch (err) {
@@ -111,11 +118,12 @@ program
   .command('status')
   .description('show pending migrations')
   .action(async () => {
-    const { envVar, ...options } = loadConfig(program.opts<PgBumpOptions>())
-    const log = createLogger(options)
+    const { envVar, ...opts } = loadConfig(program.opts<PgBumpOptions>())
+    const options = { lock: false, transaction: false }
+    const log = createLogger(opts)
     const sql = postgres(process.env[envVar] as string)
     const { isCorrupt, ...results } = await withSql({ sql, ...options }, async sql => {
-      return await status({ ...options, sql })
+      return await status({ ...opts, sql })
     })
     if (isCorrupt) {
       const { missing, passed } = results
