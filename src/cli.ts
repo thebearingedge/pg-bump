@@ -17,7 +17,7 @@ type PgBumpOptions = {
   files: string
   envVar: string
   transaction: boolean
-  journalTable: string
+  journal: string
 }
 
 const packageJSON = fs.readFileSync(path.resolve(__dirname, '../package.json'), 'utf8')
@@ -31,7 +31,7 @@ program
   .option('-c, --config <path>', 'relative path to config file', './.pgbumprc')
   .option('-f, --files <path>', 'relative path to migrations directory', './migrations')
   .option('-e, --env-var <variable>', 'database url environment variable', 'DATABASE_URL')
-  .option('-j, --journalTable <table>', 'table used to record migration history', 'schema_journal')
+  .option('-j, --journal <table>', 'table used to record migration history', 'schema_journal')
 
 program
   .command('make')

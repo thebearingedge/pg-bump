@@ -14,7 +14,7 @@ export type Unsynced = {
 export type StatusOptions = {
   sql: Sql<{}>
   files: string
-  journalTable: string
+  journal: string
   silent?: boolean
 }
 
@@ -30,11 +30,9 @@ export type StatusResults = {
 
 export default async function bootstrap(options: StatusOptions): Promise<StatusResults> {
 
-  const { sql, files, journalTable } = options
+  const { sql, files, journal } = options
 
-  const [table, schema = 'public'] = journalTable.split('.').reverse()
-
-  const schemaTable = `${wrapIdentifier(schema)}.${wrapIdentifier(table)}`
+  const schemaTable = (sql(journal) as unknown as { value: string }).value.replace(/"""/g, '"')
 
   const [, [baseline], synced] = await sql.unsafe<[never, [Synced | undefined], Synced[]]>(`
     set client_min_messages to warning;
@@ -100,8 +98,4 @@ export default async function bootstrap(options: StatusOptions): Promise<StatusR
   return {
     synced, pending, missing, passed, schemaTable, isCorrupt, isSchemaTableNew
   }
-}
-
-function wrapIdentifier(identifier: string): string {
-  return '"' + identifier.replace(/^"/, '').replace(/"$/, '') + '"'
 }
