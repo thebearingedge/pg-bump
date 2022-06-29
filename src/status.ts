@@ -11,14 +11,14 @@ export type Unsynced = {
   migration: string
 }
 
-export type BootstrapOptions = {
+export type StatusOptions = {
   sql: Sql<{}>
   files: string
   journalTable: string
   silent?: boolean
 }
 
-export type BootstrapResults = {
+export type StatusResults = {
   schemaTable: string
   synced: Synced[]
   pending: Unsynced[]
@@ -29,7 +29,7 @@ export type BootstrapResults = {
   isSchemaTableNew: boolean
 }
 
-export default async function bootstrap(options: BootstrapOptions): Promise<BootstrapResults> {
+export default async function bootstrap(options: StatusOptions): Promise<StatusResults> {
 
   const { sql, files, journalTable } = options
 
@@ -37,7 +37,7 @@ export default async function bootstrap(options: BootstrapOptions): Promise<Boot
 
   const schemaTable = `${wrapIdentifier(schema)}.${wrapIdentifier(table)}`
 
-  const [, [baseline], synced] = await sql.unsafe<[never, Synced[], Synced[]]>(`
+  const [, [baseline], synced] = await sql.unsafe<[never, [Synced | undefined], Synced[]]>(`
     set client_min_messages to warning;
 
     create table if not exists ${schemaTable} (

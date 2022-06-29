@@ -2,19 +2,19 @@ import fs from 'fs'
 import path from 'path'
 import { PostgresError } from 'postgres'
 import MigrationError from './migration-error'
-import bootstrap, { BootstrapOptions, BootstrapResults, Synced } from './bootstrap'
+import status, { StatusOptions, StatusResults, Synced } from './status'
 
-type DownOptions = BootstrapOptions & {
+type DownOptions = StatusOptions & {
   to?: number
 }
 
-type DownResults = BootstrapResults & {
+type DownResults = StatusResults & {
   reverted: Synced[]
 }
 
 export default async function down(options: DownOptions): Promise<DownResults> {
 
-  const { isCorrupt, ...results } = await bootstrap(options)
+  const { isCorrupt, ...results } = await status(options)
 
   if (isCorrupt) return { ...results, reverted: [], isCorrupt }
 
@@ -33,9 +33,7 @@ export default async function down(options: DownOptions): Promise<DownResults> {
       if (!(err instanceof PostgresError)) throw err
       const file = path.join(migration, 'down.sql')
       const lines = script.slice(0, Number(err.position)).split('\n')
-      throw err instanceof PostgresError
-        ? new MigrationError(err.message, file, lines.length, lines.join('\n') + '...')
-        : err
+      throw new MigrationError(err.message, file, lines.length, lines.join('\n') + '...')
     }
     await sql.unsafe(`
       delete

@@ -2,11 +2,11 @@ import fs from 'fs'
 import path from 'path'
 import { PostgresError } from 'postgres'
 import MigrationError from './migration-error'
-import bootstrap, { BootstrapOptions, BootstrapResults, Synced } from './bootstrap'
+import bootstrap, { StatusOptions, StatusResults, Synced } from './status'
 
-type UpOptions = BootstrapOptions
+type UpOptions = StatusOptions
 
-type UpResults = BootstrapResults & {
+type UpResults = StatusResults & {
   applied: Synced[]
 }
 
@@ -28,9 +28,7 @@ export default async function up(options: UpOptions): Promise<UpResults> {
       if (!(err instanceof PostgresError)) throw err
       const file = path.join(migration, 'up.sql')
       const lines = script.slice(0, Number(err.position)).split('\n')
-      throw err instanceof PostgresError
-        ? new MigrationError(err.message, file, lines.length, lines.join('\n') + '...')
-        : err
+      throw new MigrationError(err.message, file, lines.length, lines.join('\n') + '...')
     }
     const [synced] = await sql.unsafe<[Synced]>(`
       insert into ${schemaTable} (version, migration)

@@ -7,9 +7,9 @@ import up from './up'
 import down from './down'
 import create from './create'
 import withSql from './with-sql'
-import bootstrap, { Synced, Unsynced } from './bootstrap'
 import createLogger from './create-logger'
 import MigrationError from './migration-error'
+import bootstrap, { Synced, Unsynced } from './status'
 
 type PgBumpOptions = {
   config: string
