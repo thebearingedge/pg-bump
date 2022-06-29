@@ -2,14 +2,14 @@ import fs from 'fs'
 import path from 'path'
 import { PostgresError } from 'postgres'
 import MigrationError from './migration-error'
-import bootstrap, { BootstrapOptions, BootstrapResults } from './bootstrap'
+import bootstrap, { BootstrapOptions, BootstrapResults, Synced } from './bootstrap'
 
 type DownOptions = BootstrapOptions & {
-  to?: string
+  to?: number
 }
 
 type DownResults = BootstrapResults & {
-  reverted: string[]
+  reverted: Synced[]
 }
 
 export default async function down(options: DownOptions): Promise<DownResults> {
@@ -18,11 +18,13 @@ export default async function down(options: DownOptions): Promise<DownResults> {
 
   if (isCorrupt) return { ...results, reverted: [], isCorrupt }
 
-  const [{ synced, schemaTable }, { sql, to = '', files }] = [results, options]
+  const [{ synced, schemaTable }, { sql, to = 0, files }] = [results, options]
 
-  const reverting = synced.slice(synced.indexOf(to) + 1).reverse()
+  const reverting = synced
+    .slice(synced.findIndex(({ version }) => version === to) + 1)
+    .sort((a, b) => a.version > b.version ? -1 : 1)
 
-  for (const migration of reverting) {
+  for (const { migration } of reverting) {
     const file = path.join(migration, 'down.sql')
     const script = fs.readFileSync(path.join(files, file), 'utf8')
     try {

@@ -2,12 +2,12 @@ import fs from 'fs'
 import path from 'path'
 import chalk from 'chalk'
 import postgres from 'postgres'
-import { program } from 'commander'
+import { program, Option } from 'commander'
 import up from './up'
 import down from './down'
 import create from './create'
 import withSql from './with-sql'
-import bootstrap from './bootstrap'
+import bootstrap, { Synced, Unsynced } from './bootstrap'
 import createLogger from './create-logger'
 import MigrationError from './migration-error'
 
@@ -50,13 +50,13 @@ program
   .command('up')
   .description('apply pending migrations')
   .option('-t, --transaction', 'wrap migrations in a transaction', true)
-  .action(async () => {
-    const { envVar, transaction, ...options } = loadConfig(program.opts<PgBumpOptions>())
-    const log = createLogger(options)
+  .action(async options => {
+    const { envVar, transaction, ...opts } = loadConfig(program.opts<PgBumpOptions>())
+    const log = createLogger(opts)
     const sql = postgres(process.env[envVar] as string)
     const { isCorrupt, ...results } = await withSql({ sql, transaction }, async sql => {
       try {
-        return await up({ sql, ...options })
+        return await up({ sql, ...opts, ...options })
       } catch (err) {
         if (!(err instanceof MigrationError)) throw err
         log.prefix().error(printMigrationErrorReport(err))
@@ -78,15 +78,15 @@ program
 program
   .command('down')
   .description('revert synced migrations')
-  .option('--to <migration>', 'revert to <migration>')
   .option('-t, --transaction', 'wrap migrations in a transaction', true)
-  .action(async () => {
-    const { envVar, transaction, ...options } = loadConfig(program.opts<PgBumpOptions>())
-    const log = createLogger(options)
+  .addOption(new Option('--to <version>', 'revert to schema <version>').argParser(parseInt))
+  .action(async options => {
+    const { envVar, transaction, ...opts } = loadConfig(program.opts<PgBumpOptions>())
+    const log = createLogger(opts)
     const sql = postgres(process.env[envVar] as string)
     const { isCorrupt, ...results } = await withSql({ sql, transaction }, async sql => {
       try {
-        return await down({ sql, ...options })
+        return await down({ sql, ...opts, ...options })
       } catch (err) {
         if (!(err instanceof MigrationError)) throw err
         log.prefix().error(printMigrationErrorReport(err))
@@ -117,14 +117,13 @@ program
       const { missing, untracked } = results
       log.prefix().error(printCorruptionReport(missing, untracked))
       process.exit(1)
-    } else {
-      const { isSchemaTableNew, schemaTable } = results
-      if (isSchemaTableNew) {
-        log.prefix().info(chalk.green(`created ${schemaTable}`))
-      }
-      const { pending } = results
-      log.prefix().info(printStatusReport(pending))
     }
+    const { isSchemaTableNew, schemaTable } = results
+    if (isSchemaTableNew) {
+      log.prefix().info(chalk.green(`created ${schemaTable}`))
+    }
+    const { pending, synced } = results
+    log.prefix().info(printStatusReport(pending, synced))
     void sql.end()
   })
 
@@ -137,10 +136,10 @@ function loadConfig({ config: configPath, ...defaults }: PgBumpOptions): PgBumpO
   return { ...defaults, ...loaded }
 }
 
-function printCorruptionReport(missing: string[], untracked: string[]): string {
+function printCorruptionReport(missing: Synced[], untracked: Unsynced[]): string {
   const corrupted = missing
-    .map(migration => ({ status: 'missing', migration }))
-    .concat(untracked.map(migration => ({ status: 'untracked', migration })))
+    .map(({ migration }) => ({ status: 'missing', migration }))
+    .concat(untracked.map(({ migration }) => ({ status: 'untracked', migration })))
     .map(({ status, migration }) => `${chalk.yellow(status)}: ${migration}`)
     .join('\n')
   return chalk.bold('\n\nMIGRATIONS CORRUPTED\n\n') + corrupted
@@ -154,38 +153,41 @@ function printMigrationErrorReport(err: MigrationError): string {
   ].join('\n')
 }
 
-function printStatusReport(pending: string[]): string {
-  if (pending.length === 0) {
-    return chalk.green('migrations synced')
-  } else {
-    const pluralized = pending.length === 1 ? 'migration' : 'migrations'
-    return [
-      chalk.green(`found ${pending.length} pending ${pluralized}`),
-      ...pending.map(migration => chalk.cyan('pending:', chalk.white(migration)))
-    ].join('\n')
-  }
+function printStatusReport(pending: Unsynced[], synced: Synced[]): string {
+  const pluralized = pending.length === 1 ? 'migration' : 'migrations'
+  return [
+    chalk.green(`found ${pending.length} pending ${pluralized}`),
+    ...synced.map(({ version, migration }) => (
+      chalk.cyan((String(version) + ':').padStart(9), chalk.white(migration))
+    )),
+    ...pending.map(({ migration }) => chalk.cyan('(pending)', chalk.white(migration)))
+  ].join('\n')
 }
 
-function printUpReport(applied: string[]): string {
+function printUpReport(applied: Synced[]): string {
   if (applied.length === 0) {
     return chalk.green('already up to date')
   } else {
     const pluralized = applied.length === 1 ? 'migration' : 'migrations'
     return [
       chalk.green(`applied ${applied.length} ${pluralized}`),
-      ...applied.map(migration => chalk.cyan('applied:', chalk.white(migration)))
+      ...applied.map(({ version, migration }) => (
+        chalk.cyan((String(version) + ':').padStart(9), chalk.white(migration))
+      ))
     ].join('\n')
   }
 }
 
-function printDownReport(reverted: string[]): string {
+function printDownReport(reverted: Synced[]): string {
   if (reverted.length === 0) {
     return chalk.green('already at base migration')
   } else {
     const pluralized = reverted.length === 1 ? 'migration' : 'migrations'
     return [
       chalk.green(`reverted ${reverted.length} ${pluralized}`),
-      ...reverted.map(migration => chalk.cyan('reverted:', chalk.white(migration)))
+      ...reverted.map(({ version, migration }) => (
+        chalk.cyan((String(version) + ':').padStart(9), chalk.white(migration))
+      ))
     ].join('\n')
   }
 }

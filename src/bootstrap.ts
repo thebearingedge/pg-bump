@@ -1,6 +1,16 @@
 import fs from 'fs'
 import { Sql } from 'postgres'
 
+export type Synced = {
+  version: number
+  migration: string
+}
+
+export type Unsynced = {
+  version: null
+  migration: string
+}
+
 export type BootstrapOptions = {
   sql: Sql<{}>
   files: string
@@ -10,17 +20,14 @@ export type BootstrapOptions = {
 
 export type BootstrapResults = {
   schemaTable: string
-  synced: string[]
-  pending: string[]
-  missing: string[]
-  untracked: string[]
+  synced: Synced[]
+  pending: Unsynced[]
+  missing: Synced[]
+  untracked: Unsynced[]
   isCorrupt: boolean
   isSynchronized: boolean
   isSchemaTableNew: boolean
 }
-
-type Created = { version: number }
-type Synced = { migration: string }
 
 export default async function bootstrap(options: BootstrapOptions): Promise<BootstrapResults> {
 
@@ -30,7 +37,7 @@ export default async function bootstrap(options: BootstrapOptions): Promise<Boot
 
   const schemaTable = `${wrapIdentifier(schema)}.${wrapIdentifier(table)}`
 
-  const [, created, applied] = await sql.unsafe<[unknown, Created[], Synced[]]>(`
+  const [, [baseline], synced] = await sql.unsafe<[never, Synced[], Synced[]]>(`
     set client_min_messages to warning;
 
     create table if not exists ${schemaTable} (
@@ -45,28 +52,29 @@ export default async function bootstrap(options: BootstrapOptions): Promise<Boot
     values (0, 'baseline')
     on conflict (version)
     do nothing
-    returning *;
+    returning version,
+              migration;
 
-    select migration
+    select version,
+           migration
       from ${schemaTable}
      where version > 0
      order by version;
   `)
 
-  const isSchemaTableNew = created.length !== 0
+  const isSchemaTableNew = baseline != null
 
   fs.mkdirSync(files, { recursive: true })
 
-  const known = fs.readdirSync(files, { withFileTypes: true })
+  const all = fs.readdirSync(files, { withFileTypes: true })
     .filter(entry => entry.isDirectory())
-    .map(({ name }) => name)
-    .sort()
+    .map(({ name }) => ({ version: null, migration: name }))
+    .sort((a, b) => a.migration < b.migration ? -1 : 1)
 
-  const synced = applied.map(({ migration }) => migration)
-  const syncedSet = new Set(synced)
+  const syncedSet = new Set(synced.map(({ migration }) => migration))
 
-  const isSynchronized = known.length === synced.length &&
-                         known.every(migration => syncedSet.has(migration))
+  const isSynchronized = all.length === synced.length &&
+                         all.every(({ migration }) => syncedSet.has(migration))
 
   if (isSynchronized) {
     return {
@@ -81,13 +89,13 @@ export default async function bootstrap(options: BootstrapOptions): Promise<Boot
     }
   }
 
-  const knownSet = new Set(known)
+  const knownSet = new Set(all.map(({ migration }) => migration))
 
-  const pending = known.filter(migration => !syncedSet.has(migration))
-  const missing = synced.filter(migration => !knownSet.has(migration))
-  const untracked = known
+  const missing = synced.filter(({ migration }) => !knownSet.has(migration))
+  const pending = all.filter(({ migration }) => !syncedSet.has(migration))
+  const untracked = all
     .slice(0, synced.length - missing.length)
-    .filter(migration => !syncedSet.has(migration))
+    .filter(({ migration }) => !syncedSet.has(migration))
 
   const isCorrupt = missing.length !== 0 && untracked.length !== 0
 
