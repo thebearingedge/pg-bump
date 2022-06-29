@@ -1,7 +1,7 @@
 {
   "name": "pg-bump",
   "version": "4.0.0",
-  "description": "An opinionated, minimalist SQL migration CLI for PostgreSQL.",
+  "description": "Minimalist SQL migration CLI for PostgreSQL.",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "bin": {

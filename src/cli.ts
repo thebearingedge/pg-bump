@@ -9,7 +9,7 @@ import create from './create'
 import withSql from './with-sql'
 import createLogger from './create-logger'
 import MigrationError from './migration-error'
-import bootstrap, { Synced, Unsynced } from './status'
+import status, { Synced, Unsynced } from './status'
 
 type PgBumpOptions = {
   config: string
@@ -27,23 +27,23 @@ program
   .name(name)
   .version(`v${String(version)}`, '-v, --version', 'output the version number')
   .description(description)
-  .option('-c, --config <path>', 'relative path to config file', './.pgbumprc')
   .option('-s, --silent', 'suppress log output', false)
+  .option('-c, --config <path>', 'relative path to config file', './.pgbumprc')
   .option('-f, --files <path>', 'relative path to migrations directory', './migrations')
+  .option('-e, --env-var <variable>', 'database url environment variable', 'DATABASE_URL')
   .option('-j, --journalTable <table>', 'table used to record migration history', 'schema_journal')
-  .option('-e, --env-var <variable>', 'environment variable holding the database url', 'DATABASE_URL')
 
 program
-  .command('create')
-  .alias('make')
-  .description('Create a new migration file.')
-  .argument('<migration>', 'name of new migration to create')
+  .command('make')
+  .alias('create')
+  .description('create a new migration file')
+  .argument('<migration>', 'name of new migration')
   .action((script: string) => {
     const options = loadConfig(program.opts<PgBumpOptions>())
     const log = createLogger(options)
-    log.prefix().info(chalk.green('creating migration files...'))
+    log.info(chalk.green('creating migration files...'))
     const migration = create({ ...options, script })
-    log.info(chalk.cyan('created:'), chalk.white(path.join(migration, '{up,down}.sql')))
+    log.info(chalk.cyan(' created:'), chalk.white(path.join(migration, '{up,down}.sql')))
   })
 
 program
@@ -59,19 +59,21 @@ program
         return await up({ sql, ...opts, ...options })
       } catch (err) {
         if (!(err instanceof MigrationError)) throw err
-        log.prefix().error(printMigrationErrorReport(err))
+        log.error(printMigrationErrorReport(err))
         process.exit(1)
       }
     })
     if (isCorrupt) {
-      const { missing, untracked } = results
-      log.prefix().error(printCorruptionReport(missing, untracked))
+      const { missing, passed } = results
+      log.error(printCorruptionReport(missing, passed))
       process.exit(1)
     }
     const { isSchemaTableNew, schemaTable } = results
-    if (isSchemaTableNew) log.prefix().info(chalk.green(`created ${schemaTable}`))
+    if (isSchemaTableNew) {
+      log.info(chalk.green(`created ${schemaTable}`))
+    }
     const { applied } = results
-    log.prefix().info(printUpReport(applied))
+    log.info(printUpReport(applied))
     void sql.end()
   })
 
@@ -89,19 +91,21 @@ program
         return await down({ sql, ...opts, ...options })
       } catch (err) {
         if (!(err instanceof MigrationError)) throw err
-        log.prefix().error(printMigrationErrorReport(err))
+        log.error(printMigrationErrorReport(err))
         process.exit(1)
       }
     })
     if (isCorrupt) {
-      const { missing, untracked } = results
-      log.prefix().error(printCorruptionReport(missing, untracked))
+      const { missing, passed } = results
+      log.error(printCorruptionReport(missing, passed))
       process.exit(1)
     }
     const { isSchemaTableNew, schemaTable } = results
-    if (isSchemaTableNew) log.prefix().info(chalk.green(`created ${schemaTable}`))
+    if (isSchemaTableNew) {
+      log.info(chalk.green(`created ${schemaTable}`))
+    }
     const { reverted } = results
-    log.prefix().info(printDownReport(reverted))
+    log.info(printDownReport(reverted))
     void sql.end()
   })
 
@@ -112,18 +116,18 @@ program
     const { envVar, ...options } = loadConfig(program.opts<PgBumpOptions>())
     const log = createLogger(options)
     const sql = postgres(process.env[envVar] as string)
-    const { isCorrupt, ...results } = await bootstrap({ ...options, sql })
+    const { isCorrupt, ...results } = await status({ ...options, sql })
     if (isCorrupt) {
-      const { missing, untracked } = results
-      log.prefix().error(printCorruptionReport(missing, untracked))
+      const { missing, passed } = results
+      log.error(printCorruptionReport(missing, passed))
       process.exit(1)
     }
     const { isSchemaTableNew, schemaTable } = results
     if (isSchemaTableNew) {
-      log.prefix().info(chalk.green(`created ${schemaTable}`))
+      log.info(chalk.green(`created table ${schemaTable}`))
     }
     const { pending, synced } = results
-    log.prefix().info(printStatusReport(pending, synced))
+    log.info(printStatusReport(pending, synced))
     void sql.end()
   })
 
@@ -136,19 +140,19 @@ function loadConfig({ config: configPath, ...defaults }: PgBumpOptions): PgBumpO
   return { ...defaults, ...loaded }
 }
 
-function printCorruptionReport(missing: Synced[], untracked: Unsynced[]): string {
-  const corrupted = missing
-    .map(({ migration }) => ({ status: 'missing', migration }))
-    .concat(untracked.map(({ migration }) => ({ status: 'untracked', migration })))
-    .map(({ status, migration }) => `${chalk.yellow(status)}: ${migration}`)
+function printCorruptionReport(missing: Synced[], passed: Unsynced[]): string {
+  return chalk.bold('MIGRATIONS CORRUPT\n') + missing
+    .map(({ migration }) => ({ status: 'missing:', migration }))
+    .concat(passed.map(({ migration }) => ({ status: 'passed:', migration })))
+    .sort((a, b) => a.migration < b.migration ? -1 : 1)
+    .map(({ status, migration }) => `${chalk.yellow(status.padStart(9))} ${migration}`)
     .join('\n')
-  return chalk.bold('\n\nMIGRATIONS CORRUPTED\n\n') + corrupted
 }
 
 function printMigrationErrorReport(err: MigrationError): string {
   return [
     chalk.red('ABORTED:', chalk.white(err.message, '\n')),
-    chalk.bold(err.file, 'line', err.line, '\n'),
+    chalk.bold(`${err.file}:${err.line}`, '\n'),
     chalk.yellow(err.script, '\n')
   ].join('\n')
 }
@@ -167,27 +171,25 @@ function printStatusReport(pending: Unsynced[], synced: Synced[]): string {
 function printUpReport(applied: Synced[]): string {
   if (applied.length === 0) {
     return chalk.green('already up to date')
-  } else {
-    const pluralized = applied.length === 1 ? 'migration' : 'migrations'
-    return [
-      chalk.green(`applied ${applied.length} ${pluralized}`),
-      ...applied.map(({ version, migration }) => (
-        chalk.cyan((String(version) + ':').padStart(9), chalk.white(migration))
-      ))
-    ].join('\n')
   }
+  const pluralized = applied.length === 1 ? 'migration' : 'migrations'
+  return [
+    chalk.green(`applied ${applied.length} ${pluralized}`),
+    ...applied.map(({ version, migration }) => (
+      chalk.cyan((String(version) + ':').padStart(9), chalk.white(migration))
+    ))
+  ].join('\n')
 }
 
 function printDownReport(reverted: Synced[]): string {
   if (reverted.length === 0) {
     return chalk.green('already at base migration')
-  } else {
-    const pluralized = reverted.length === 1 ? 'migration' : 'migrations'
-    return [
-      chalk.green(`reverted ${reverted.length} ${pluralized}`),
-      ...reverted.map(({ version, migration }) => (
-        chalk.cyan((String(version) + ':').padStart(9), chalk.white(migration))
-      ))
-    ].join('\n')
   }
+  const pluralized = reverted.length === 1 ? 'migration' : 'migrations'
+  return [
+    chalk.green(`reverted ${reverted.length} ${pluralized}`),
+    ...reverted.map(({ version, migration }) => (
+      chalk.cyan((String(version) + ':').padStart(9), chalk.white(migration))
+    ))
+  ].join('\n')
 }

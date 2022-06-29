@@ -15,7 +15,7 @@ describe('create', () => {
   })
 
   it('creates a new migration script in a directory', () => {
-    const directoryName = create({ script: 'create-table-foos', files: files })
+    const directoryName = create({ script: 'create-table-foos', files })
     const entries = fs.readdirSync(path.join(files, directoryName))
     expect(entries)
       .to.have.lengthOf(2)

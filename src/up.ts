@@ -12,11 +12,11 @@ type UpResults = StatusResults & {
 
 export default async function up(options: UpOptions): Promise<UpResults> {
 
-  const { isCorrupt, isSynchronized, ...results } = await bootstrap(options)
+  const { isCorrupt, ...results } = await bootstrap(options)
 
   const applied: Synced[] = []
 
-  if (isCorrupt || isSynchronized) return { ...results, applied, isCorrupt, isSynchronized }
+  if (isCorrupt) return { ...results, applied, isCorrupt }
 
   const [{ pending, schemaTable }, { sql, files }] = [results, options]
 
@@ -27,8 +27,7 @@ export default async function up(options: UpOptions): Promise<UpResults> {
     } catch (err) {
       if (!(err instanceof PostgresError)) throw err
       const file = path.join(migration, 'up.sql')
-      const lines = script.slice(0, Number(err.position)).split('\n')
-      throw new MigrationError(err.message, file, lines.length, lines.join('\n') + '...')
+      throw MigrationError.fromPostgres(err, file, script)
     }
     const [synced] = await sql.unsafe<[Synced]>(`
       insert into ${schemaTable} (version, migration)
@@ -43,7 +42,6 @@ export default async function up(options: UpOptions): Promise<UpResults> {
     ...results,
     applied,
     pending: [],
-    isCorrupt: false,
-    isSynchronized: true
+    isCorrupt: false
   }
 }

@@ -23,9 +23,8 @@ export type StatusResults = {
   synced: Synced[]
   pending: Unsynced[]
   missing: Synced[]
-  untracked: Unsynced[]
+  passed: Unsynced[]
   isCorrupt: boolean
-  isSynchronized: boolean
   isSchemaTableNew: boolean
 }
 
@@ -81,26 +80,25 @@ export default async function bootstrap(options: StatusOptions): Promise<StatusR
       synced,
       pending: [],
       missing: [],
-      untracked: [],
+      passed: [],
       schemaTable,
       isCorrupt: false,
-      isSynchronized,
       isSchemaTableNew
     }
   }
 
-  const knownSet = new Set(all.map(({ migration }) => migration))
+  const allSet = new Set(all.map(({ migration }) => migration))
 
-  const missing = synced.filter(({ migration }) => !knownSet.has(migration))
+  const missing = synced.filter(({ migration }) => !allSet.has(migration))
   const pending = all.filter(({ migration }) => !syncedSet.has(migration))
-  const untracked = all
+  const passed = all
     .slice(0, synced.length - missing.length)
     .filter(({ migration }) => !syncedSet.has(migration))
 
-  const isCorrupt = missing.length !== 0 && untracked.length !== 0
+  const isCorrupt = missing.length !== 0 || passed.length !== 0
 
   return {
-    synced, missing, pending, untracked, schemaTable, isCorrupt, isSynchronized, isSchemaTableNew
+    synced, pending, missing, passed, schemaTable, isCorrupt, isSchemaTableNew
   }
 }
 

@@ -32,8 +32,7 @@ export default async function down(options: DownOptions): Promise<DownResults> {
     } catch (err) {
       if (!(err instanceof PostgresError)) throw err
       const file = path.join(migration, 'down.sql')
-      const lines = script.slice(0, Number(err.position)).split('\n')
-      throw new MigrationError(err.message, file, lines.length, lines.join('\n') + '...')
+      throw MigrationError.fromPostgres(err, file, script)
     }
     await sql.unsafe(`
       delete
@@ -45,7 +44,6 @@ export default async function down(options: DownOptions): Promise<DownResults> {
   return {
     ...results,
     reverted: reverting,
-    isCorrupt: false,
-    isSynchronized: true
+    isCorrupt: false
   }
 }
