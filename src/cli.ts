@@ -74,7 +74,6 @@ program
     }
     const { applied } = results
     log.info(printUpReport(applied))
-    void sql.end()
   })
 
 program
@@ -106,7 +105,6 @@ program
     }
     const { reverted } = results
     log.info(printDownReport(reverted))
-    void sql.end()
   })
 
 program
@@ -116,7 +114,9 @@ program
     const { envVar, ...options } = loadConfig(program.opts<PgBumpOptions>())
     const log = createLogger(options)
     const sql = postgres(process.env[envVar] as string)
-    const { isCorrupt, ...results } = await status({ ...options, sql })
+    const { isCorrupt, ...results } = await withSql({ sql, ...options }, async sql => {
+      return await status({ ...options, sql })
+    })
     if (isCorrupt) {
       const { missing, passed } = results
       log.error(printCorruptionReport(missing, passed))
@@ -128,7 +128,6 @@ program
     }
     const { pending, synced } = results
     log.info(printStatusReport(pending, synced))
-    void sql.end()
   })
 
 program.parse()
