@@ -1,14 +1,15 @@
 import fs from 'fs'
+import url from 'url'
 import path from 'path'
 import chalk from 'chalk'
 import postgres from 'postgres'
 import { program, Option } from 'commander'
-import status from './status'
-import up from './up'
-import down from './down'
-import create from './create'
-import withSql from './with-sql'
-import log from './logger'
+import up from './up.js'
+import down from './down.js'
+import create from './create.js'
+import status from './status.js'
+import withSql from './with-sql.js'
+import log from './logger.js'
 
 type PgBumpOptions = {
   config: string
@@ -17,11 +18,13 @@ type PgBumpOptions = {
   journal: string
 }
 
+const packageDir = path.dirname(url.fileURLToPath(import.meta.url))
+
 const {
   name,
   version,
   description
-} = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../package.json'), 'utf8'))
+} = JSON.parse(fs.readFileSync(path.resolve(packageDir, '../package.json'), 'utf8'))
 
 program
   .name(name)

@@ -1,7 +1,7 @@
 import fs from 'fs'
 import path from 'path'
 import { expect } from 'chai'
-import create from './create'
+import create from './create.js'
 
 describe('create', () => {
 

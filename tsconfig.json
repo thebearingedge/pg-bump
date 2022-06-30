@@ -2,15 +2,11 @@
   "compilerOptions": {
     "strict": true,
     "noEmit": true,
-    "target": "esnext",
+    "module": "esnext",
     "esModuleInterop": true,
     "moduleResolution": "node",
   },
   "include": [
-    "src/",
-    "rollup.config.ts"
-  ],
-  "ts-node": {
-    "swc": true
-  }
+    "src/"
+  ]
 }

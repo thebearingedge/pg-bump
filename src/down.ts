@@ -1,9 +1,9 @@
 import fs from 'fs'
 import path from 'path'
 import chalk from 'chalk'
-import { PostgresError } from 'postgres'
-import { printMigrationErrorReport } from './migration-error'
-import status, { StatusOptions, StatusResults, Synced } from './status'
+import postgres from 'postgres'
+import { printMigrationErrorReport } from './migration-error.js'
+import status, { StatusOptions, StatusResults, Synced } from './status.js'
 
 type DownOptions = StatusOptions & {
   to?: number
@@ -34,7 +34,7 @@ export default async function down(options: DownOptions): Promise<DownResults> {
     try {
       await sql.unsafe(script)
     } catch (err) {
-      if (!(err instanceof PostgresError)) throw err
+      if (!(err instanceof postgres.PostgresError)) throw err
       return {
         ...results,
         isError: true,

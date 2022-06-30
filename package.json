@@ -1,10 +1,10 @@
 {
   "name": "pg-bump",
   "version": "4.0.0",
-  "description": "Minimalist SQL migration CLI for PostgreSQL.",
   "license": "MIT",
+  "description": "Minimalist SQL migration CLI for PostgreSQL.",
+  "type": "module",
   "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
   "bin": {
     "pg-bump": "./dist/cli.js"
   },
@@ -15,18 +15,20 @@
     "test": "mocha",
     "tdd": "mocha -w -R min",
     "cover": "c8 -r text -r html -r lcov mocha",
-    "demo": "node -r dotenv/config -r ts-node/register src/cli.ts",
+    "demo": "ts-node --esm --swc -r dotenv/config src/cli.ts",
+    "prebuild": "rimraf dist",
     "build": "tsc -p tsconfig.prod.json",
     "prepare": "husky install",
     "prepack": "npm run build"
   },
   "dependencies": {
-    "chalk": "^4.1.2",
+    "chalk": "^5.0.1",
     "commander": "^9.3.0",
     "postgres": "^3.2.4"
   },
   "devDependencies": {
     "@swc/core": "^1.2.205",
+    "@swc/helpers": "^0.4.3",
     "@types/chai": "^4.3.1",
     "@types/mocha": "^9.1.1",
     "@types/node": "^18.0.0",
@@ -38,8 +40,9 @@
     "husky": "^8.0.1",
     "lint-staged": "^13.0.3",
     "mocha": "^10.0.0",
+    "regenerator-runtime": "^0.13.9",
+    "rimraf": "^3.0.2",
     "ts-node": "^10.8.1",
-    "tslib": "^2.4.0",
     "typescript": "^4.7.4"
   },
   "homepage": "https://github.com/thebearingedge/pg-bump#readme",
