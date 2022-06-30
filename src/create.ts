@@ -3,16 +3,16 @@ import path from 'path'
 
 type CreateMigrationOptions = {
   files: string
-  script: string
+  name: string
   silent?: boolean
 }
 
 export default function createMigration(options: CreateMigrationOptions): string {
 
-  const { files, script } = options
+  const { files, name } = options
 
   const timestamp = Date.now().toString()
-  const migration = `${timestamp}_${script}`
+  const migration = `${timestamp}_${name}`
   const migrationPath = path.resolve(process.cwd(), path.join(files, migration))
 
   fs.mkdirSync(migrationPath, { recursive: true })
