@@ -1,4 +1,5 @@
 import fs from 'fs'
+import chalk from 'chalk'
 import { Sql } from 'postgres'
 
 export type Synced = {
@@ -6,7 +7,7 @@ export type Synced = {
   migration: string
 }
 
-export type Unsynced = {
+export type NotSynced = {
   version: null
   migration: string
 }
@@ -15,22 +16,22 @@ export type StatusOptions = {
   sql: Sql<{}>
   files: string
   journal: string
-  silent?: boolean
+  printStatus?: boolean
 }
 
 export type StatusResults = {
+  isError: boolean
+  summary: Array<{ isError: boolean, message: string }>
   schemaTable: string
   synced: Synced[]
-  pending: Unsynced[]
   missing: Synced[]
-  passed: Unsynced[]
-  isCorrupt: boolean
-  isSchemaTableNew: boolean
+  passed: NotSynced[]
+  pending: NotSynced[]
 }
 
-export default async function bootstrap(options: StatusOptions): Promise<StatusResults> {
+export default async function status(options: StatusOptions): Promise<StatusResults> {
 
-  const { sql, files, journal } = options
+  const { sql, files, journal, printStatus = false } = options
 
   const schemaTable = (sql(journal) as unknown as { value: string }).value.replace(/"""/g, '"')
 
@@ -61,6 +62,10 @@ export default async function bootstrap(options: StatusOptions): Promise<StatusR
 
   const isSchemaTableNew = baseline != null
 
+  const summary = isSchemaTableNew
+    ? [{ isError: false, message: chalk.green(`created table ${schemaTable}`) }]
+    : []
+
   fs.mkdirSync(files, { recursive: true })
 
   const all = fs.readdirSync(files, { withFileTypes: true })
@@ -75,13 +80,15 @@ export default async function bootstrap(options: StatusOptions): Promise<StatusR
 
   if (isSynchronized) {
     return {
+      isError: false,
+      schemaTable,
       synced,
-      pending: [],
       missing: [],
       passed: [],
-      schemaTable,
-      isCorrupt: false,
-      isSchemaTableNew
+      pending: [],
+      summary: printStatus
+        ? summary.concat({ isError: false, message: printStatusReport(synced) })
+        : summary
     }
   }
 
@@ -93,9 +100,39 @@ export default async function bootstrap(options: StatusOptions): Promise<StatusR
     .slice(0, synced.length - missing.length)
     .filter(({ migration }) => !syncedSet.has(migration))
 
-  const isCorrupt = missing.length !== 0 || passed.length !== 0
+  const isError = missing.length !== 0 || passed.length !== 0
 
   return {
-    synced, pending, missing, passed, schemaTable, isCorrupt, isSchemaTableNew
+    isError,
+    schemaTable,
+    synced,
+    missing,
+    passed,
+    pending,
+    summary: isError
+      ? summary.concat({ isError: true, message: printCorruptionReport(passed, missing) })
+      : printStatus
+        ? summary.concat({ isError: false, message: printStatusReport(synced, pending) })
+        : summary
   }
+}
+
+function printStatusReport(synced: Synced[], pending: NotSynced[] = []): string {
+  const pluralized = pending.length === 1 ? 'migration' : 'migrations'
+  return [
+    chalk.green(`found ${pending.length} pending ${pluralized}`),
+    ...synced.map(({ version, migration }) => (
+      chalk.cyan((String(version) + ':').padStart(9), chalk.white(migration))
+    )),
+    ...pending.map(({ migration }) => chalk.cyan('(pending)', chalk.white(migration)))
+  ].join('\n')
+}
+
+function printCorruptionReport(passed: NotSynced[], missing: Synced[]): string {
+  return chalk.bold('MIGRATIONS CORRUPT\n') + missing
+    .map(({ migration }) => ({ status: 'missing:', migration }))
+    .concat(passed.map(({ migration }) => ({ status: 'passed:', migration })))
+    .sort((a, b) => a.migration < b.migration ? -1 : 1)
+    .map(({ status, migration }) => `${chalk.yellow(status.padStart(9))} ${migration}`)
+    .join('\n')
 }

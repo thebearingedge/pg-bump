@@ -1,10 +1,13 @@
 import fs from 'fs'
 import path from 'path'
+import chalk from 'chalk'
 import { PostgresError } from 'postgres'
-import MigrationError from './migration-error'
+import { printMigrationErrorReport } from './migration-error'
 import bootstrap, { StatusOptions, StatusResults, Synced } from './status'
 
-type UpOptions = StatusOptions
+type UpOptions = StatusOptions & {
+  transaction?: boolean
+}
 
 type UpResults = StatusResults & {
   applied: Synced[]
@@ -12,36 +15,59 @@ type UpResults = StatusResults & {
 
 export default async function up(options: UpOptions): Promise<UpResults> {
 
-  const { isCorrupt, ...results } = await bootstrap(options)
+  const { isError, summary, ...results } = await bootstrap(options)
 
   const applied: Synced[] = []
 
-  if (isCorrupt) return { ...results, applied, isCorrupt }
+  if (isError) return { isError, ...results, applied, summary }
 
-  const [{ pending, schemaTable }, { sql, files }] = [results, options]
+  const [{ pending, schemaTable }, { sql, files, transaction = true }] = [results, options]
 
   for (const { migration } of pending) {
-    const script = fs.readFileSync(path.join(files, migration, 'up.sql'), 'utf8')
+    const file = path.join(migration, 'up.sql')
+    const script = fs.readFileSync(path.join(files, file), 'utf8')
     try {
       await sql.unsafe(script)
     } catch (err) {
       if (!(err instanceof PostgresError)) throw err
-      const file = path.join(migration, 'up.sql')
-      throw MigrationError.fromPostgres(err, file, script)
+      return {
+        ...results,
+        isError: true,
+        applied: transaction ? [] : applied,
+        summary: summary.concat({
+          isError: true, message: printMigrationErrorReport(err, file, script)
+        })
+      }
     }
     const [synced] = await sql.unsafe<[Synced]>(`
       insert into ${schemaTable} (version, migration)
-      select max(version) + 1, '${migration}' from ${schemaTable}
+      select max(version) + 1,
+             '${migration}'
+        from ${schemaTable}
       returning version,
-                migration;
+                migration
     `)
     applied.push(synced)
   }
 
   return {
     ...results,
+    isError: false,
     applied,
     pending: [],
-    isCorrupt: false
+    summary: summary.concat({ isError: false, message: printUpReport(applied) })
   }
+}
+
+function printUpReport(applied: Synced[]): string {
+  if (applied.length === 0) {
+    return chalk.green('already up to date')
+  }
+  const pluralized = applied.length === 1 ? 'migration' : 'migrations'
+  return [
+    chalk.green(`applied ${applied.length} ${pluralized}`),
+    ...applied.map(({ version, migration }) => (
+      chalk.cyan((String(version) + ':').padStart(9), chalk.white(migration))
+    ))
+  ].join('\n')
 }

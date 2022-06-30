@@ -1,11 +1,13 @@
 import fs from 'fs'
 import path from 'path'
+import chalk from 'chalk'
 import { PostgresError } from 'postgres'
-import MigrationError from './migration-error'
+import { printMigrationErrorReport } from './migration-error'
 import status, { StatusOptions, StatusResults, Synced } from './status'
 
 type DownOptions = StatusOptions & {
   to?: number
+  transaction?: boolean
 }
 
 type DownResults = StatusResults & {
@@ -14,11 +16,13 @@ type DownResults = StatusResults & {
 
 export default async function down(options: DownOptions): Promise<DownResults> {
 
-  const { isCorrupt, ...results } = await status(options)
+  const { isError, summary, ...results } = await status(options)
 
-  if (isCorrupt) return { ...results, reverted: [], isCorrupt }
+  const reverted: Synced[] = []
 
-  const [{ synced, schemaTable }, { sql, to = 0, files }] = [results, options]
+  if (isError) return { isError, ...results, reverted, summary }
+
+  const [{ synced, schemaTable }, { sql, files, to = 0, transaction = true }] = [results, options]
 
   const reverting = synced
     .slice(synced.findIndex(({ version }) => version === to) + 1)
@@ -31,19 +35,42 @@ export default async function down(options: DownOptions): Promise<DownResults> {
       await sql.unsafe(script)
     } catch (err) {
       if (!(err instanceof PostgresError)) throw err
-      const file = path.join(migration, 'down.sql')
-      throw MigrationError.fromPostgres(err, file, script)
+      return {
+        ...results,
+        isError: true,
+        reverted: transaction ? [] : reverted,
+        summary: summary.concat({
+          isError: true, message: printMigrationErrorReport(err, file, script)
+        })
+      }
     }
-    await sql.unsafe(`
+    const [notSynced] = await sql.unsafe<[Synced]>(`
       delete
         from ${schemaTable}
        where migration = '${migration}'
+      returning version,
+                migration
     `)
+    reverted.push(notSynced)
   }
 
   return {
     ...results,
-    reverted: reverting,
-    isCorrupt: false
+    isError: false,
+    reverted,
+    summary: summary.concat({ isError: false, message: printDownReport(reverting) })
   }
+}
+
+function printDownReport(reverted: Synced[]): string {
+  if (reverted.length === 0) {
+    return chalk.green('already at base migration')
+  }
+  const pluralized = reverted.length === 1 ? 'migration' : 'migrations'
+  return [
+    chalk.green(`reverted ${reverted.length} ${pluralized}`),
+    ...reverted.map(({ version, migration }) => (
+      chalk.cyan((String(version) + ':').padStart(9), chalk.white(migration))
+    ))
+  ].join('\n')
 }
