@@ -3,9 +3,8 @@ import path from 'path'
 import chalk from 'chalk'
 
 type CreateMigrationOptions = {
-  files: string
   name: string
-  silent?: boolean
+  files: string
 }
 
 type CreateMigrationResults = {
@@ -16,7 +15,7 @@ type CreateMigrationResults = {
 
 export default function createMigration(options: CreateMigrationOptions): CreateMigrationResults {
 
-  const { files, name } = options
+  const { name, files } = options
 
   const timestamp = Date.now().toString()
   const migration = `${timestamp}_${name}`

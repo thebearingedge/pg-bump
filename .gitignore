@@ -1,6 +1,8 @@
 node_modules/
 migrations/*
 !migrations/.gitkeep
+sandbox/*
+!sandbox/.gitkeep
 coverage/
 dist/
 .DS_Store

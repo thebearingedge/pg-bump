@@ -5,9 +5,10 @@ import create from './create.js'
 
 describe('create', () => {
 
-  const files = './migrations'
+  const files = './sandbox/migrations'
 
   beforeEach('clear migrations dir', () => {
+    fs.mkdirSync(files, { recursive: true })
     const entries = fs.readdirSync(files, { withFileTypes: true })
     entries.forEach(entry => {
       if (entry.isDirectory()) fs.rmSync(path.join(files, entry.name), { recursive: true })
