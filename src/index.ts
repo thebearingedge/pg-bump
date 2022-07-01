@@ -1,6 +1,6 @@
 import type { Sql, Options, PostgresType } from 'postgres'
 
-export type PgBumpConfigFile<
+export type PgBumpConfig<
   T extends { [key: string]: unknown } = {},
   P extends { [key: string]: PostgresType } = {}
 > = {

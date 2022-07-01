@@ -10,14 +10,13 @@ import create from './create.js'
 import status from './status.js'
 import withSql from './with-sql.js'
 import log from './logger.js'
-import { PgBumpConfigFile } from './index.js'
+import { PgBumpConfig } from './index.js'
 
-type CliArgs = PgBumpConfigFile & {
+type CliOpts = PgBumpConfig & {
   configPath?: string
-  require: string[]
 }
 
-type LoadedArgs = Pick<{ [K in keyof CliArgs]-?: CliArgs[K] }, 'files' | 'journal'> & {
+type LoadedConfig = Pick<{ [K in keyof CliOpts]-?: CliOpts[K] }, 'files' | 'journal'> & {
   sql: Sql<{}>
 }
 
@@ -26,7 +25,6 @@ const nodeRequire = module.createRequire(import.meta.url)
 const { name, version, description } = nodeRequire('../package.json')
 
 const defaults = {
-  require: [],
   files: './migrations',
   envVar: 'DATABASE_URL',
   journal: 'schema_journal'
@@ -48,7 +46,7 @@ program
   .description('create a new migration file')
   .argument('<migration>', 'name of new migration')
   .action(async (name: string) => {
-    const options = await loadConfig(program.opts<CliArgs>())
+    const options = await loadConfig(program.opts<CliOpts>())
     log.info(chalk.green('creating migration files...'))
     const migration = create({ ...options, name })
     log.info(chalk.cyan(' created:'), chalk.white(path.join(migration, '{up,down}.sql')))
@@ -59,7 +57,7 @@ program
   .description('show pending migrations')
   .action(async () => {
     const flags = { lock: false, transaction: false }
-    const { sql, files, journal } = await loadConfig(program.opts<CliArgs>())
+    const { sql, files, journal } = await loadConfig(program.opts<CliOpts>())
     const { isError, summary } = await withSql({ sql, ...flags }, async sql => {
       return await status({ sql, files, journal, printStatus: true })
     })
@@ -75,7 +73,7 @@ program
   .option('-t, --transaction', 'wrap migrations in a transaction', true)
   .option('--no-transaction', 'do not run migrations in a transaction')
   .action(async (flags: { lock: boolean, transaction: boolean }) => {
-    const { sql, files, journal } = await loadConfig(program.opts<CliArgs>())
+    const { sql, files, journal } = await loadConfig(program.opts<CliOpts>())
     const { isError, summary } = await withSql({ sql, ...flags }, async sql => {
       return await up({ sql, files, journal, ...flags })
     })
@@ -92,7 +90,7 @@ program
   .option('-t, --transaction', 'wrap migrations in a transaction', true)
   .addOption(new Option('--to <version>', 'revert to schema <version>').argParser(parseInt))
   .action(async (flags: { to: number, lock: boolean, transaction: boolean }) => {
-    const { sql, files, journal } = await loadConfig(program.opts<CliArgs>())
+    const { sql, files, journal } = await loadConfig(program.opts<CliOpts>())
     const { isError, summary } = await withSql({ sql, ...flags }, async sql => {
       return await down({ sql, files, journal, ...flags })
     })
@@ -102,34 +100,34 @@ program
 
 program.parse()
 
-async function loadConfig(
-  { configPath = './.pgbumprc', require, ...cliArgs }: CliArgs
-): Promise<LoadedArgs> {
+async function loadConfig({ configPath = './.pgbumprc', ...cli }: CliOpts): Promise<LoadedConfig> {
 
-  for (const hook of require) await import(hook)
+  for (const hook of cli.require ?? []) await import(hook)
 
   if (fs.statSync(configPath, { throwIfNoEntry: false }) == null) {
-    const { envVar, ...args } = { ...defaults, ...cliArgs }
-    return { ...args, sql: postgres(process.env[envVar] as string) }
+    const { envVar, ...config } = { ...defaults, ...cli }
+    return { ...config, sql: postgres(process.env[envVar] as string) }
   }
 
-  const config: PgBumpConfigFile = path.extname(configPath) !== '.js'
+  const config: PgBumpConfig = path.extname(configPath) !== '.js'
     ? JSON.parse(fs.readFileSync(configPath, 'utf8'))
     : (await import(path.resolve(process.cwd(), configPath))).default
 
-  const { envVar, client, ...args } = { ...defaults, ...config, ...cliArgs }
+  const { envVar, client, ...loaded } = { ...defaults, ...config, ...cli }
 
-  if (typeof client === 'function') {
-    return { ...args, sql: await client() }
-  }
+  for (const hook of loaded.require ?? []) await import(hook)
 
   if (typeof client === 'undefined') {
-    return { ...args, sql: postgres(process.env[envVar] as string) }
+    return { ...loaded, sql: postgres(process.env[envVar] as string) }
+  }
+
+  if (typeof client === 'function') {
+    return { ...loaded, sql: await client() }
   }
 
   const sql = typeof process.env[envVar] === 'string'
     ? postgres(process.env[envVar] as string, client)
     : postgres(client)
 
-  return { ...args, sql }
+  return { ...loaded, sql }
 }
