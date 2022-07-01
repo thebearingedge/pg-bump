@@ -1,5 +1,6 @@
 import fs from 'fs'
 import path from 'path'
+import chalk from 'chalk'
 
 type CreateMigrationOptions = {
   files: string
@@ -7,7 +8,13 @@ type CreateMigrationOptions = {
   silent?: boolean
 }
 
-export default function createMigration(options: CreateMigrationOptions): string {
+type CreateMigrationResults = {
+  isError: false
+  migration: string
+  summary: Array<{ isError: boolean, message: string }>
+}
+
+export default function createMigration(options: CreateMigrationOptions): CreateMigrationResults {
 
   const { files, name } = options
 
@@ -19,5 +26,14 @@ export default function createMigration(options: CreateMigrationOptions): string
   fs.closeSync(fs.openSync(path.join(migrationPath, 'up.sql'), 'w'))
   fs.closeSync(fs.openSync(path.join(migrationPath, 'down.sql'), 'w'))
 
-  return migration
+  return {
+    isError: false,
+    migration,
+    summary: [
+      {
+        isError: false,
+        message: chalk.cyan(' created:', chalk.white(path.join(migration, '{up,down}.sql')))
+      }
+    ]
+  }
 }

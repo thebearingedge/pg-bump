@@ -15,8 +15,8 @@ describe('create', () => {
   })
 
   it('creates a new migration script in a directory', () => {
-    const directoryName = create({ name: 'create-table-foos', files })
-    const entries = fs.readdirSync(path.join(files, directoryName))
+    const { migration } = create({ name: 'create-table-foos', files })
+    const entries = fs.readdirSync(path.join(files, migration))
     expect(entries)
       .to.have.lengthOf(2)
       .to.include('up.sql')

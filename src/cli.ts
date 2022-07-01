@@ -1,7 +1,6 @@
 import fs from 'fs'
 import path from 'path'
 import module from 'module'
-import chalk from 'chalk'
 import postgres, { Sql } from 'postgres'
 import { program, Option } from 'commander'
 import up from './up.js'
@@ -47,9 +46,9 @@ program
   .argument('<migration>', 'name of new migration')
   .action(async (name: string) => {
     const options = await loadConfig(program.opts<CliOpts>())
-    log.info(chalk.green('creating migration files...'))
-    const migration = create({ ...options, name })
-    log.info(chalk.cyan(' created:'), chalk.white(path.join(migration, '{up,down}.sql')))
+    const { isError, summary } = create({ ...options, name })
+    summary.forEach(({ isError, message }) => isError ? log.error(message) : log.info(message))
+    process.exit(isError ? 1 : 0)
   })
 
 program
