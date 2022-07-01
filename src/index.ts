@@ -7,6 +7,7 @@ export type PgBumpConfigFile<
   files?: string
   envVar?: string
   journal?: string
+  require?: string[]
   client?: Options<P> | (() => Sql<T> | Promise<Sql<T>>)
 }
 

@@ -1,6 +1,6 @@
 import fs from 'fs'
-import url from 'url'
 import path from 'path'
+import module from 'module'
 import chalk from 'chalk'
 import postgres, { Sql } from 'postgres'
 import { program, Option } from 'commander'
@@ -10,23 +10,25 @@ import create from './create.js'
 import status from './status.js'
 import withSql from './with-sql.js'
 import log from './logger.js'
-import { PgBumpConfigFile } from './index'
+import { PgBumpConfigFile } from './index.js'
 
 type CliArgs = PgBumpConfigFile & {
   configPath?: string
+  require: string[]
 }
 
-type LoadedArgs = Omit<{ [K in keyof CliArgs]-?: CliArgs[K] }, 'configPath' | 'envVar' | 'client'> & {
+type LoadedArgs = Pick<{ [K in keyof CliArgs]-?: CliArgs[K] }, 'files' | 'journal'> & {
   sql: Sql<{}>
 }
 
-const packageJSON = path.resolve(path.dirname(url.fileURLToPath(import.meta.url)), '../package.json')
+const nodeRequire = module.createRequire(import.meta.url)
 
-const { name, version, description } = JSON.parse(fs.readFileSync(packageJSON, 'utf8'))
+const { name, version, description } = nodeRequire('../package.json')
 
 const defaults = {
-  envVar: 'DATABASE_URL',
+  require: [],
   files: './migrations',
+  envVar: 'DATABASE_URL',
   journal: 'schema_journal'
 }
 
@@ -35,6 +37,7 @@ program
   .version(`v${String(version)}`, '-v, --version', 'output the version number')
   .description(description)
   .option('-c, --config-path <path>', 'relative path to config file')
+  .option('-r, --require <hook...>', 'require modules for side effects')
   .option('-f, --files <path>', 'relative path to migrations directory')
   .option('-e, --env-var <variable>', 'database url environment variable')
   .option('-j, --journal <table>', 'table used to record migration history')
@@ -100,8 +103,10 @@ program
 program.parse()
 
 async function loadConfig(
-  { configPath = './.pgbumprc', ...cliArgs }: CliArgs
+  { configPath = './.pgbumprc', require, ...cliArgs }: CliArgs
 ): Promise<LoadedArgs> {
+
+  for (const hook of require) await import(hook)
 
   if (fs.statSync(configPath, { throwIfNoEntry: false }) == null) {
     const { envVar, ...args } = { ...defaults, ...cliArgs }
