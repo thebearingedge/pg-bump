@@ -71,7 +71,7 @@ describe('up', () => {
   it('applies migrations until an exception outside of transactions', async () => {
     create({ files, name: 'create-table-foos' })
     create({ files, name: 'create-table-bars' })
-    await new Promise(resolve => setTimeout(resolve, 1))
+    await new Promise(resolve => setTimeout(resolve, 5))
     const { migration } = create({ files, name: 'create-table-bazzes' })
     fs.writeFileSync(path.join(files, migration, 'up.sql'), 'create table bazzes (\'bork\');')
     const { isError, applied, summary } = await up({ sql, files, journal, transaction: false })
