@@ -10,7 +10,7 @@ services:
   pgweb:
     image: sosedoff/pgweb:0.11.11
     environment:
-      - DATABASE_URL=postgres://user:password@postgres/pg-bump?sslmode=disable
+      - DATABASE_URL=postgres://user:password@postgres/pgBump?sslmode=disable
     ports:
       - 8081:8081
     depends_on:

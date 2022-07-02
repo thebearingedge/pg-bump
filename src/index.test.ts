@@ -5,7 +5,7 @@ import { Done } from 'mocha'
 import postgres, { Sql } from 'postgres'
 
 export const files = './sandbox/migrations'
-export const envVar = 'TEST_DATABASE_URL'
+export const envVar = 'DATABASE_URL'
 export const journal = 'schema_journal'
 
 let sql: Sql<{}>

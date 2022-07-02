@@ -34,6 +34,7 @@ export default async function down(options: DownOptions): Promise<DownResults> {
     try {
       await sql.unsafe(script)
     } catch (err) {
+      /* c8 ignore next */
       if (!(err instanceof postgres.PostgresError)) throw err
       if (!transaction) summary.push({ isError: false, message: printDownReport(reverted) })
       summary.push({ isError: true, message: printMigrationErrorReport(err, file, script) })

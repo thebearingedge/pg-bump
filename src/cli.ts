@@ -53,7 +53,7 @@ program
 
 program
   .command('status')
-  .description('show pending migrations')
+  .description('list applied and pending migrations')
   .action(async () => {
     const { sql, files, journal } = await loadConfig(program.opts<CliOpts>())
     const { isError, summary } = await withSql({ sql }, async sql => {
@@ -66,8 +66,8 @@ program
 program
   .command('up')
   .description('apply pending migrations')
-  .option('-l, --lock', 'acquire a advisory lock during migration', true)
-  .option('--no-lock', 'disable advisory lock during migration')
+  .option('-l, --lock', 'acquire advisory lock during migration', true)
+  .option('--no-lock', 'skip advisory lock during migration')
   .option('-t, --transaction', 'wrap migrations in a transaction', true)
   .option('--no-transaction', 'do not run migrations in a transaction')
   .action(async (flags: { lock: boolean, transaction: boolean }) => {
@@ -82,8 +82,8 @@ program
 program
   .command('down')
   .description('revert synced migrations')
-  .option('--no-lock', 'disable advisory lock during migration')
-  .option('-l, --lock', 'acquire a advisory lock during migration', true)
+  .option('--no-lock', 'skip advisory lock during migration')
+  .option('-l, --lock', 'acquire advisory lock during migration', true)
   .option('--no-transaction', 'do not run migrations in a transaction')
   .option('-t, --transaction', 'wrap migrations in a transaction', true)
   .addOption(new Option('--to <version>', 'revert to schema <version>').argParser(parseInt))

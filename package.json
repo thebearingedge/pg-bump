@@ -2,8 +2,11 @@
   "name": "pg-bump",
   "version": "4.0.0",
   "license": "MIT",
-  "description": "Minimalist SQL migration CLI for PostgreSQL.",
+  "description": "SQL migration CLI for PostgreSQL.",
   "type": "module",
+  "engines": {
+    "node": ">=14"
+  },
   "main": "./dist/index.js",
   "bin": {
     "pg-bump": "./dist/cli.js"
@@ -14,7 +17,7 @@
   "scripts": {
     "test": "mocha",
     "cover": "c8 -r text -r html -r lcov mocha",
-    "demo": "ts-node --esm --swc src/cli.ts",
+    "demo": "ts-node --esm --swc -r dotenv/config src/cli.ts",
     "prebuild": "rimraf dist",
     "build": "tsc -p tsconfig.prod.json",
     "prepare": "husky install",
@@ -22,9 +25,7 @@
   },
   "dependencies": {
     "chalk": "^5.0.1",
-    "commander": "^9.3.0"
-  },
-  "peerDependencies": {
+    "commander": "^9.3.0",
     "postgres": "^3.2.4"
   },
   "devDependencies": {
@@ -41,7 +42,6 @@
     "husky": "^8.0.1",
     "lint-staged": "^13.0.3",
     "mocha": "^10.0.0",
-    "postgres": "^3.2.4",
     "regenerator-runtime": "^0.13.9",
     "rimraf": "^3.0.2",
     "ts-node": "^10.8.1",
