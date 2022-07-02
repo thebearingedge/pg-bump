@@ -2,20 +2,18 @@ import fs from 'fs'
 import path from 'path'
 import chalk from 'chalk'
 
-type CreateMigrationOptions = {
+type CreateOptions = {
   name: string
   files: string
 }
 
-type CreateMigrationResults = {
+type CreateResults = {
   isError: false
   migration: string
   summary: Array<{ isError: boolean, message: string }>
 }
 
-export default function createMigration(options: CreateMigrationOptions): CreateMigrationResults {
-
-  const { name, files } = options
+export default function create({ name, files }: CreateOptions): CreateResults {
 
   const timestamp = Date.now().toString()
   const migration = `${timestamp}_${name}`

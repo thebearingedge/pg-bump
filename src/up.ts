@@ -29,15 +29,14 @@ export default async function up(options: UpOptions): Promise<UpResults> {
     try {
       await sql.unsafe(script)
     } catch (err) {
-      /* c8 ignore next */
       if (!(err instanceof postgres.PostgresError)) throw err
+      if (!transaction) summary.push({ isError: false, message: printUpReport(applied) })
+      summary.push({ isError: true, message: printMigrationErrorReport(err, file, script) })
       return {
         ...results,
         isError: true,
-        applied: transaction ? [] : applied,
-        summary: summary.concat({
-          isError: true, message: printMigrationErrorReport(err, file, script)
-        })
+        summary,
+        applied: transaction ? [] : applied
       }
     }
     const [synced] = await sql.unsafe<[Synced]>(`

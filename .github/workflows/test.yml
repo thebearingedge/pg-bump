@@ -22,9 +22,24 @@ jobs:
         uses: actions/setup-node@v1
         with:
           node-version: ${{ matrix.node-version }}
-      - run: npm ci
-      - run: npm run build
-      - run: npm run cover
+      - name: Install Dependencies
+        run: npm ci
+      - name: Compile
+        run: npm run build
+      - name: Copy .env
+        run: cp .env.example .env
+      - name: Start Database
+        run: docker-compose up --build -d
+      - name: Wait for Postgres
+        run: |
+          timeout 10 sh -c -- '
+            until docker-compose exec postgres sh -c '\''pg_isready -h "$(hostname -i)"'\''; do
+              echo "waiting for postgres..."
+              sleep 1
+            done
+          '
+      - name: Run Tests
+        run: npm run cover
       - name: Publish Coverage Report
         if: ${{ matrix.env.COVERAGE }}
         uses: codecov/codecov-action@v1

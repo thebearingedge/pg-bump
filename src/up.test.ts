@@ -13,29 +13,24 @@ describe('up', () => {
 
   beforeEach(withSql(_sql => (sql = _sql)))
 
-  afterEach(async () => await sql.end())
-
   it('applies pending migrations and appends a journal entry', async () => {
     const { migration: foos } = create({ files, name: 'create-table-foos' })
     fs.writeFileSync(path.join(files, foos, 'up.sql'), 'create table foos ();')
-    const { migration: bars } = create({ files, name: 'create-table-bars' })
-    fs.writeFileSync(path.join(files, bars, 'up.sql'), 'create table bars ();')
     const { isError } = await up({ sql, files, journal })
     expect(isError).to.equal(false)
     const [{ migrationCount }] = await sql<[{ migrationCount: number }]>`
       select count(*)::int as "migrationCount"
         from ${sql(journal)}
        where migration = ${foos}
-          or migration = ${bars}
     `
-    expect(migrationCount).to.equal(2)
+    expect(migrationCount).to.equal(1)
     const [{ tableCount }] = await sql <[{ tableCount: number }]>`
       select count(*)::int as "tableCount"
         from information_schema.tables
        where table_schema = 'public'
-         and (table_name = 'foos' or table_name = 'bars')
+         and table_name = 'foos'
     `
-    expect(tableCount).to.equal(2)
+    expect(tableCount).to.equal(1)
   })
 
   it('does not apply the same migration more than once', async () => {
@@ -66,7 +61,7 @@ describe('up', () => {
 
   it('aborts migrations when scripts contain errors', async () => {
     const { migration } = create({ files, name: 'create-table-foos' })
-    fs.writeFileSync(path.join(files, migration, 'up.sql'), 'create table foos (\'fuck you\');')
+    fs.writeFileSync(path.join(files, migration, 'up.sql'), 'create table foos (\'bork\');')
     const { isError, applied, summary } = await up({ sql, files, journal })
     expect(isError).to.equal(true)
     expect(applied).to.have.lengthOf(0)
@@ -76,9 +71,9 @@ describe('up', () => {
   it('applies migrations until an exception outside of transactions', async () => {
     create({ files, name: 'create-table-foos' })
     create({ files, name: 'create-table-bars' })
-    await new Promise(resolve => setTimeout(resolve))
+    await new Promise(resolve => setTimeout(resolve, 1))
     const { migration } = create({ files, name: 'create-table-bazzes' })
-    fs.writeFileSync(path.join(files, migration, 'up.sql'), 'create table bazzes (\'fuck you\');')
+    fs.writeFileSync(path.join(files, migration, 'up.sql'), 'create table bazzes (\'bork\');')
     const { isError, applied, summary } = await up({ sql, files, journal, transaction: false })
     expect(isError).to.equal(true)
     expect(applied).to.have.lengthOf(2)

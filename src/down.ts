@@ -35,13 +35,13 @@ export default async function down(options: DownOptions): Promise<DownResults> {
       await sql.unsafe(script)
     } catch (err) {
       if (!(err instanceof postgres.PostgresError)) throw err
+      if (!transaction) summary.push({ isError: false, message: printDownReport(reverted) })
+      summary.push({ isError: true, message: printMigrationErrorReport(err, file, script) })
       return {
         ...results,
         isError: true,
-        reverted: transaction ? [] : reverted,
-        summary: summary.concat({
-          isError: true, message: printMigrationErrorReport(err, file, script)
-        })
+        summary,
+        reverted: transaction ? [] : reverted
       }
     }
     const [notSynced] = await sql.unsafe<[Synced]>(`
