@@ -2,12 +2,12 @@ import { Sql } from 'postgres'
 
 type WithSqlOptions = {
   sql: Sql<{}>
-  lock: boolean
-  transaction: boolean
+  lock?: boolean
+  transaction?: boolean
 }
 
 export default async function withSql<T>(
-  { sql, lock, transaction }: WithSqlOptions,
+  { sql, lock = false, transaction = false }: WithSqlOptions,
   procedure: (sql: Sql<{}>) => Promise<T>
 ): Promise<T> {
   try {

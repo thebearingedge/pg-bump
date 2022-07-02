@@ -15,7 +15,7 @@ describe('down', () => {
 
   afterEach(async () => await sql.end())
 
-  it('applies pending migrations and appends a journal entry', async () => {
+  it('reverts synced migrations and removes a journal entry', async () => {
     const { migration } = create({ files, name: 'create-table-foos' })
     fs.writeFileSync(path.join(files, migration, 'down.sql'), 'drop table foos;')
     await sql.unsafe(createSchemaTable(journal))
@@ -32,7 +32,7 @@ describe('down', () => {
     const [table] = await sql`
       select 1
         from information_schema.tables
-       where table_name = 'foos'
+       where table_name   = 'foos'
          and table_schema = 'public'
     `
     expect(table).to.equal(undefined)

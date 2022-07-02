@@ -55,9 +55,8 @@ program
   .command('status')
   .description('show pending migrations')
   .action(async () => {
-    const flags = { lock: false, transaction: false }
     const { sql, files, journal } = await loadConfig(program.opts<CliOpts>())
-    const { isError, summary } = await withSql({ sql, ...flags }, async sql => {
+    const { isError, summary } = await withSql({ sql }, async sql => {
       return await status({ sql, files, journal, printStatus: true })
     })
     summary.forEach(({ isError, message }) => isError ? log.error(message) : log.info(message))

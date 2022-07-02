@@ -3,7 +3,7 @@ import path from 'path'
 import chalk from 'chalk'
 import postgres from 'postgres'
 import { printMigrationErrorReport } from './migration-error.js'
-import bootstrap, { StatusOptions, StatusResults, Synced } from './status.js'
+import status, { StatusOptions, StatusResults, Synced } from './status.js'
 
 type UpOptions = StatusOptions & {
   transaction?: boolean
@@ -15,7 +15,7 @@ type UpResults = StatusResults & {
 
 export default async function up(options: UpOptions): Promise<UpResults> {
 
-  const { isError, summary, ...results } = await bootstrap(options)
+  const { isError, summary, ...results } = await status(options)
 
   const applied: Synced[] = []
 
@@ -29,6 +29,7 @@ export default async function up(options: UpOptions): Promise<UpResults> {
     try {
       await sql.unsafe(script)
     } catch (err) {
+      /* c8 ignore next */
       if (!(err instanceof postgres.PostgresError)) throw err
       return {
         ...results,
