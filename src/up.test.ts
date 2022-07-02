@@ -10,9 +10,7 @@ describe('up', () => {
 
   let sql: Sql<{}>
 
-  beforeEach(withSql(_sql => {
-    sql = _sql
-  }))
+  beforeEach(withSql(_sql => (sql = _sql)))
 
   afterEach(async () => await sql.end())
 
@@ -27,7 +25,8 @@ describe('up', () => {
        where migration = ${migration}
     `
     expect(synced).not.to.equal(undefined)
-    await sql`select 1 from "foos"`
+    const [table] = await sql`select 1 from "foos"`
+    expect(table).not.to.equal(undefined)
   })
 
 })

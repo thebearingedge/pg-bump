@@ -29,13 +29,8 @@ export type StatusResults = {
   pending: NotSynced[]
 }
 
-export default async function status(options: StatusOptions): Promise<StatusResults> {
-
-  const { sql, files, journal, printStatus = false } = options
-
-  const schemaTable = (sql(journal) as unknown as { value: string }).value.replace(/"""/g, '"')
-
-  const [, [baseline], synced] = await sql.unsafe<[never, [Synced | undefined], Synced[]]>(`
+export function createSchemaTable(schemaTable: string): string {
+  return `
     set client_min_messages to warning;
 
     create table if not exists ${schemaTable} (
@@ -58,7 +53,17 @@ export default async function status(options: StatusOptions): Promise<StatusResu
       from ${schemaTable}
      where version > 0
      order by version;
-  `)
+  `
+}
+
+export default async function status(options: StatusOptions): Promise<StatusResults> {
+
+  const { sql, files, journal, printStatus = false } = options
+
+  const schemaTable = (sql(journal) as unknown as { value: string }).value.replace(/"""/g, '"')
+
+  const [, [baseline], synced] = await sql
+    .unsafe<[never, [Synced | undefined], Synced[]]>(createSchemaTable(schemaTable))
 
   const isSchemaTableNew = baseline != null
 
