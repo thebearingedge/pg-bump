@@ -33,7 +33,7 @@ jobs:
       - name: Wait for Postgres
         run: |
           timeout 10 sh -c -- '
-            until docker-compose exec postgres sh -c '\''pg_isready -h "$(hostname -i)"'\''; do
+            until docker-compose exec -T postgres sh -c '\''pg_isready -h "$(hostname -i)"'\''; do
               echo "waiting for postgres..."
               sleep 1
             done
