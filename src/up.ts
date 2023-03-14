@@ -3,7 +3,7 @@ import path from 'path'
 import chalk from 'chalk'
 import postgres from 'postgres'
 import { printMigrationErrorReport } from './migration-error.js'
-import status, { StatusOptions, StatusResults, Synced } from './status.js'
+import status, { type StatusOptions, type StatusResults, type Synced } from './status.js'
 
 type UpOptions = StatusOptions & {
   transaction?: boolean

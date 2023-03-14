@@ -1,12 +1,12 @@
 import { expect } from 'chai'
-import { Sql } from 'postgres'
+import { type Sql } from 'postgres'
 import create from './create.js'
 import status, { createSchemaTable } from './status.js'
 import { files, journal, withSql } from './index.test.js'
 
 describe('status', () => {
 
-  let sql: Sql<{}>
+  let sql: Sql
 
   beforeEach(withSql(_sql => (sql = _sql)))
 

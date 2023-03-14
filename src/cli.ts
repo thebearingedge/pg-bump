@@ -2,7 +2,7 @@
 import fs from 'fs'
 import path from 'path'
 import module from 'module'
-import postgres, { Sql } from 'postgres'
+import postgres, { type Sql } from 'postgres'
 import { program, Option } from 'commander'
 import up from './up.js'
 import down from './down.js'
@@ -10,14 +10,14 @@ import create from './create.js'
 import status from './status.js'
 import withSql from './with-sql.js'
 import log from './logger.js'
-import { PgBumpConfig } from './index.js'
+import { type PgBumpConfig } from './index.js'
 
 type CliOpts = PgBumpConfig & {
   configPath?: string
 }
 
 type LoadedConfig = Pick<{ [K in keyof CliOpts]-?: CliOpts[K] }, 'files' | 'journal'> & {
-  sql: Sql<{}>
+  sql: Sql
 }
 
 const nodeRequire = module.createRequire(import.meta.url)
@@ -48,7 +48,7 @@ program
   .action(async (name: string) => {
     const options = await loadConfig(program.opts<CliOpts>())
     const { isError, summary } = create({ ...options, name })
-    summary.forEach(({ isError, message }) => isError ? log.error(message) : log.info(message))
+    summary.forEach(({ isError, message }) => { isError ? log.error(message) : log.info(message) })
     process.exit(isError ? 1 : 0)
   })
 
@@ -60,7 +60,7 @@ program
     const { isError, summary } = await withSql({ sql }, async sql => {
       return await status({ sql, files, journal, printStatus: true })
     })
-    summary.forEach(({ isError, message }) => isError ? log.error(message) : log.info(message))
+    summary.forEach(({ isError, message }) => { isError ? log.error(message) : log.info(message) })
     process.exit(isError ? 1 : 0)
   })
 
@@ -76,7 +76,7 @@ program
     const { isError, summary } = await withSql({ sql, ...flags }, async sql => {
       return await up({ sql, files, journal, ...flags })
     })
-    summary.forEach(({ isError, message }) => isError ? log.error(message) : log.info(message))
+    summary.forEach(({ isError, message }) => { isError ? log.error(message) : log.info(message) })
     process.exit(isError ? 1 : 0)
   })
 
@@ -93,7 +93,7 @@ program
     const { isError, summary } = await withSql({ sql, ...flags }, async sql => {
       return await down({ sql, files, journal, ...flags })
     })
-    summary.forEach(({ isError, message }) => isError ? log.error(message) : log.info(message))
+    summary.forEach(({ isError, message }) => { isError ? log.error(message) : log.info(message) })
     process.exit(isError ? 1 : 0)
   })
 

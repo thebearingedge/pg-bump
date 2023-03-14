@@ -1,14 +1,14 @@
-import { Sql } from 'postgres'
+import { type Sql } from 'postgres'
 
 type WithSqlOptions = {
-  sql: Sql<{}>
+  sql: Sql
   lock?: boolean
   transaction?: boolean
 }
 
 export default async function withSql<T>(
   { sql, lock = false, transaction = false }: WithSqlOptions,
-  procedure: (sql: Sql<{}>) => Promise<T>
+  procedure: (sql: Sql) => Promise<T>
 ): Promise<T> {
   try {
     let isLockAcquired = !lock

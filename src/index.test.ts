@@ -1,14 +1,14 @@
 import 'dotenv/config'
 import fs from 'fs'
 import path from 'path'
-import { Done } from 'mocha'
-import postgres, { Sql } from 'postgres'
+import { type Done } from 'mocha'
+import postgres, { type Sql } from 'postgres'
 
 export const files = './sandbox/migrations'
 export const envVar = 'DATABASE_URL'
 export const journal = 'schema_journal'
 
-let sql: Sql<{}>
+let sql: Sql
 
 beforeEach('reset sandbox/migrations dir and database', async () => {
   fs.mkdirSync(files, { recursive: true })
@@ -17,9 +17,9 @@ beforeEach('reset sandbox/migrations dir and database', async () => {
   })
 })
 
-afterEach('close database connection', async () => await sql?.end())
+afterEach('close database connection', async () => { await sql?.end() })
 
-export const withSql = (fn: (sql: Sql<{}>) => any) => (done: Done) => {
+export const withSql = (fn: (sql: Sql) => any) => (done: Done) => {
   sql = postgres(process.env[envVar] as string)
   sql
     .unsafe(`

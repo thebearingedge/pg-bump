@@ -1,5 +1,5 @@
 import chalk from 'chalk'
-import { PostgresError } from 'postgres'
+import { type PostgresError } from 'postgres'
 
 export function printMigrationErrorReport(
   err: PostgresError,

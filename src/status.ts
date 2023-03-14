@@ -1,6 +1,6 @@
 import fs from 'fs'
 import chalk from 'chalk'
-import { Sql } from 'postgres'
+import { type Sql } from 'postgres'
 
 export type Synced = {
   version: number
@@ -13,7 +13,7 @@ export type NotSynced = {
 }
 
 export type StatusOptions = {
-  sql: Sql<{}>
+  sql: Sql
   files: string
   journal: string
   printStatus?: boolean

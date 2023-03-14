@@ -1,7 +1,7 @@
 import fs from 'fs'
 import path from 'path'
 import { expect } from 'chai'
-import { Sql } from 'postgres'
+import { type Sql } from 'postgres'
 import up from './up.js'
 import create from './create.js'
 import { createSchemaTable } from './status.js'
@@ -9,7 +9,7 @@ import { files, journal, withSql } from './index.test.js'
 
 describe('up', () => {
 
-  let sql: Sql<{}>
+  let sql: Sql
 
   beforeEach(withSql(_sql => (sql = _sql)))
 
@@ -40,7 +40,7 @@ describe('up', () => {
     const { isError, applied } = await up({ sql, files, journal })
     expect(isError).to.equal(false)
     expect(applied).to.have.lengthOf(0)
-    const [{ migrationCount }] = await sql<[{migrationCount: number }]>`
+    const [{ migrationCount }] = await sql<[{ migrationCount: number }]>`
       select count(*)::int as "migrationCount"
         from ${sql(journal)}
        where migration = ${migration}

@@ -1,7 +1,7 @@
 import fs from 'fs'
 import path from 'path'
 import { expect } from 'chai'
-import { Sql } from 'postgres'
+import { type Sql } from 'postgres'
 import down from './down.js'
 import create from './create.js'
 import { createSchemaTable } from './status.js'
@@ -9,7 +9,7 @@ import { files, journal, withSql } from './index.test.js'
 
 describe('down', () => {
 
-  let sql: Sql<{}>
+  let sql: Sql
 
   beforeEach(withSql(_sql => (sql = _sql)))
 

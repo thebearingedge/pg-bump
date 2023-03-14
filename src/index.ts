@@ -1,8 +1,8 @@
 import type { Sql, Options, PostgresType } from 'postgres'
 
 export type PgBumpConfig<
-  T extends { [key: string]: unknown } = {},
-  P extends { [key: string]: PostgresType } = {}
+  T extends Record<string, unknown> = Record<string, unknown>,
+  P extends Record<string, PostgresType> = Record<string, PostgresType>
 > = {
   files?: string
   envVar?: string
