@@ -1,18 +1,22 @@
 services:
 
   postgres:
-    image: postgres:14-alpine
+    image: docker.io/postgres:14-alpine
     env_file:
       - .env
     ports:
       - 5432:5432
+    healthcheck:
+      test: pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB} || exit 1
+      interval: 5s
+      start_period: 5s
 
   pgweb:
-    image: sosedoff/pgweb:0.11.11
+    image: docker.io/sosedoff/pgweb:0.14.0
     environment:
-      - DATABASE_URL=postgres://user:password@postgres/pgBump?sslmode=disable
+      - PGWEB_DATABASE_URL=postgres://user:password@postgres/pgBump?sslmode=disable
     ports:
       - 8081:8081
     depends_on:
-      - postgres
-    restart: always
+      postgres:
+        condition: service_healthy

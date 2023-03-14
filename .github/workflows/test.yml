@@ -30,14 +30,6 @@ jobs:
         run: cp .env.example .env
       - name: Start Database
         run: docker-compose up --build -d
-      - name: Wait for Postgres
-        run: |
-          timeout 10 sh -c -- '
-            until docker-compose exec -T postgres sh -c '\''pg_isready -h "$(hostname -i)"'\''; do
-              echo "waiting for postgres..."
-              sleep 1
-            done
-          '
       - name: Run Tests
         run: npm run cover
       - name: Publish Coverage Report
