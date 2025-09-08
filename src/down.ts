@@ -32,7 +32,10 @@ export default async function down(options: DownOptions): Promise<DownResults> {
     const file = path.join(migration, 'down.sql')
     const script = fs.readFileSync(path.join(files, file), 'utf8')
     try {
-      await sql.unsafe(script)
+      if (script.includes('-- pg-bump disable-transaction')) {
+        await sql.unsafe(script)
+      }
+      await sql.begin(async sql => await sql.unsafe(script))
     } catch (err) {
       /* c8 ignore next */
       if (!(err instanceof postgres.PostgresError)) throw err

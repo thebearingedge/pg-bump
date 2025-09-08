@@ -69,8 +69,6 @@ program
   .description('apply pending migrations')
   .option('-l, --lock', 'acquire advisory lock during migration', true)
   .option('--no-lock', 'skip advisory lock during migration')
-  .option('-t, --transaction', 'wrap migrations in a transaction', true)
-  .option('--no-transaction', 'do not run migrations in a transaction')
   .action(async (flags: { lock: boolean, transaction: boolean }) => {
     const { sql, files, journal } = await loadConfig(program.opts<CliOpts>())
     const { isError, summary } = await withSql({ sql, ...flags }, async sql => {
@@ -85,8 +83,6 @@ program
   .description('revert synced migrations')
   .option('--no-lock', 'skip advisory lock during migration')
   .option('-l, --lock', 'acquire advisory lock during migration', true)
-  .option('--no-transaction', 'do not run migrations in a transaction')
-  .option('-t, --transaction', 'wrap migrations in a transaction', true)
   .addOption(new Option('--to <version>', 'revert to schema <version>').argParser(parseInt))
   .action(async (flags: { to: number, lock: boolean, transaction: boolean }) => {
     const { sql, files, journal } = await loadConfig(program.opts<CliOpts>())

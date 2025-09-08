@@ -3,11 +3,10 @@ import { type Sql } from 'postgres'
 type WithSqlOptions = {
   sql: Sql
   lock?: boolean
-  transaction?: boolean
 }
 
 export default async function withSql<T>(
-  { sql, lock = false, transaction = false }: WithSqlOptions,
+  { sql, lock = false }: WithSqlOptions,
   procedure: (sql: Sql) => Promise<T>
 ): Promise<T> {
   try {
@@ -18,9 +17,7 @@ export default async function withSql<T>(
       `
       if (!isLockAcquired) await new Promise(resolve => setTimeout(resolve, 1000))
     }
-    const result: T = transaction
-      ? await sql.begin(async sql => await procedure(sql)) as T
-      : await procedure(sql)
+    const result = await procedure(sql)
     lock && await sql`select pg_advisory_unlock(-9223372036854775808)`
     return result
   } finally {

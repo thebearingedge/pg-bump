@@ -27,7 +27,11 @@ export default async function up(options: UpOptions): Promise<UpResults> {
     const file = path.join(migration, 'up.sql')
     const script = fs.readFileSync(path.join(files, file), 'utf8')
     try {
-      await sql.unsafe(script)
+      if (script.includes('-- pg-bump disable-transaction')) {
+        await sql.unsafe(script)
+      } else {
+        await sql.begin(async sql => await sql.unsafe(script))
+      }
     } catch (err) {
       /* c8 ignore next */
       if (!(err instanceof postgres.PostgresError)) throw err
