@@ -7,7 +7,6 @@ import status, { type StatusOptions, type StatusResults, type Synced } from './s
 
 type DownOptions = StatusOptions & {
   to?: number
-  transaction?: boolean
 }
 
 type DownResults = StatusResults & {
@@ -22,7 +21,7 @@ export default async function down(options: DownOptions): Promise<DownResults> {
 
   if (isError) return { isError, ...results, reverted, summary }
 
-  const [{ synced, schemaTable }, { sql, files, to = 0, transaction = true }] = [results, options]
+  const [{ synced, schemaTable }, { sql, files, to = 0 }] = [results, options]
 
   const reverting = synced
     .slice(synced.findIndex(({ version }) => version === to) + 1)
@@ -39,13 +38,13 @@ export default async function down(options: DownOptions): Promise<DownResults> {
     } catch (err) {
       /* c8 ignore next */
       if (!(err instanceof postgres.PostgresError)) throw err
-      if (!transaction) summary.push({ isError: false, message: printDownReport(reverted) })
+      summary.push({ isError: false, message: printDownReport(reverted) })
       summary.push({ isError: true, message: printMigrationErrorReport(err, file, script) })
       return {
         ...results,
         isError: true,
         summary,
-        reverted: transaction ? [] : reverted
+        reverted
       }
     }
     const [notSynced] = await sql.unsafe<[Synced]>(`

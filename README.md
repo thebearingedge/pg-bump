@@ -1,5 +1,4 @@
-pg-bump
---
+## pg-bump
 
 SQL migration CLI for PostgreSQL.
 
@@ -10,17 +9,27 @@ SQL migration CLI for PostgreSQL.
 
 ## What is it?
 
-`pg-bump` provides command line management of PostgreSQL database schema migrations authored in "Plain SQL". It presumes that **a)** you are [checking schema migrations into source control](https://blog.codinghorror.com/get-your-database-under-version-control/) and **b)** you are [using environment variables for your application configuration](https://12factor.net/config).
+`pg-bump` provides command line management of PostgreSQL database schema
+migrations authored in "Plain SQL". It presumes that **a)** you are
+[checking schema migrations into source control](https://blog.codinghorror.com/get-your-database-under-version-control/)
+and **b)** you are
+[using environment variables for your application configuration](https://12factor.net/config).
 
-`pg-bump` is primarily intended for use as an executable in [`package.json` scripts](https://docs.npmjs.com/misc/scripts). By default, applying or reverting migrations is run in a single transaction. However, this can be disabled via command line options.
+`pg-bump` is primarily intended for use as an executable in
+[`package.json` scripts](https://docs.npmjs.com/misc/scripts). By default,
+applying or reverting migrations is run in a single transaction. However, this
+can be disabled via command line options.
 
 ## ESM-only
 
-As of v4, `pg-bump` is an [ECMAScript module](https://nodejs.org/api/esm.html). This should not matter much as it is intended to be used as a CLI application and ESM has been supported since Node.js v12. v3 is still CommonJS.
+As of v4, `pg-bump` is an [ECMAScript module](https://nodejs.org/api/esm.html).
+This should not matter much as it is intended to be used as a CLI application
+and ESM has been supported since Node.js v12. v3 is still CommonJS.
 
 ## Powered by [`@porsager/postgres`](https://github.com/porsager/postgres)
 
-As of v4, `pg-bump` connects to PostgreSQL with the `postgres` package instead of `pg`.
+As of v4, `pg-bump` connects to PostgreSQL with the `postgres` package instead
+of `pg`.
 
 ## Installation
 
@@ -30,7 +39,8 @@ To add `pg-bump` to your `dependencies` do:
 λ npm i pg-bump
 ```
 
-It is possible to install `pg-bump` globally, but I never recommend global installs and I don't know why some people still suggest it.
+It is possible to install `pg-bump` globally, but I never recommend global
+installs and I don't know why some people still suggest it.
 
 ```bash
 λ npm i -g pg-bump
@@ -64,7 +74,9 @@ Commands:
 
 ## Creating a Migration
 
-The `pg-bump make` command generates new `.sql` migrations in your migrations directory (defaults to `./migrations`). The migration is split into two files: `up.sql` and `down.sql`.
+The `pg-bump make` command generates new `.sql` migrations in your migrations
+directory (defaults to `./migrations`). The migration is split into two files:
+`up.sql` and `down.sql`.
 
 ```shell
 λ npx pg-bump make --help
@@ -80,7 +92,6 @@ The `pg-bump make` command generates new `.sql` migrations in your migrations di
 ```
 
 ### Example
-
 
 ```shell
 λ npx pg-bump make create_table_users
@@ -106,8 +117,6 @@ The `pg-bump up` command applies all pending migrations.
 # Options:
 #   -l, --lock         acquire advisory lock during migration (default: true)
 #   --no-lock          skip advisory lock during migration
-#   -t, --transaction  wrap migrations in a transaction (default: true)
-#   --no-transaction   do not run migrations in a transaction
 #   -h, --help         display help for command
 ```
 
@@ -123,7 +132,8 @@ The `pg-bump up` command applies all pending migrations.
 
 ## Reverting Migrations
 
-The `pg-bump down` command reverts migrations. Include `--to <version>` to only revert migrations to, but not including `<version>`.
+The `pg-bump down` command reverts migrations. Include `--to <version>` to only
+revert migrations to, but not including `<version>`.
 
 ```shell
 λ npx pg-bump down --help
@@ -134,8 +144,6 @@ The `pg-bump down` command reverts migrations. Include `--to <version>` to only 
 # Options:
 #   --no-lock          skip advisory lock during migration
 #   -l, --lock         acquire advisory lock during migration (default: true)
-#   --no-transaction   do not run migrations in a transaction
-#   -t, --transaction  wrap migrations in a transaction (default: true)
 #   --to <version>     revert to schema <version>
 #   -h, --help         display help for command
 ```
@@ -176,11 +184,15 @@ List applied and pending migrations with the `pg-bump status` command.
 
 ## Development
 
-Contributions welcome! If you add functionality or options, please include tests.
+Contributions welcome! If you add functionality or options, please include
+tests.
 
 ### Environment Variables and Docker
 
-[`docker-compose`](https://docs.docker.com/compose/) can be used to start and stop a local PostgreSQL instance if you don't have a server running on your machine. If necessary, you can [override `docker-compose.yml`](https://docs.docker.com/compose/extends/#understanding-multiple-compose-files).
+[`docker-compose`](https://docs.docker.com/compose/) can be used to start and
+stop a local PostgreSQL instance if you don't have a server running on your
+machine. If necessary, you can
+[override `docker-compose.yml`](https://docs.docker.com/compose/extends/#understanding-multiple-compose-files).
 
 #### Copy the `.env` Template
 

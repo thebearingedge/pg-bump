@@ -6,7 +6,7 @@ import { printMigrationErrorReport } from './migration-error.js'
 import status, { type StatusOptions, type StatusResults, type Synced } from './status.js'
 
 type UpOptions = StatusOptions & {
-  transaction?: boolean
+
 }
 
 type UpResults = StatusResults & {
@@ -21,7 +21,7 @@ export default async function up(options: UpOptions): Promise<UpResults> {
 
   if (isError) return { isError, ...results, applied, summary }
 
-  const [{ pending, schemaTable }, { sql, files, transaction = true }] = [results, options]
+  const [{ pending, schemaTable }, { sql, files }] = [results, options]
 
   for (const { migration } of pending) {
     const file = path.join(migration, 'up.sql')
@@ -35,13 +35,13 @@ export default async function up(options: UpOptions): Promise<UpResults> {
     } catch (err) {
       /* c8 ignore next */
       if (!(err instanceof postgres.PostgresError)) throw err
-      if (!transaction) summary.push({ isError: false, message: printUpReport(applied) })
+      summary.push({ isError: false, message: printUpReport(applied) })
       summary.push({ isError: true, message: printMigrationErrorReport(err, file, script) })
       return {
         ...results,
         isError: true,
         summary,
-        applied: transaction ? [] : applied
+        applied
       }
     }
     const [synced] = await sql.unsafe<[Synced]>(`
