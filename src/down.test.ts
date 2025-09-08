@@ -105,6 +105,7 @@ describe('down', () => {
   it('reverts migrations until an exception outside of transactions', async () => {
     const { migration: foos } = create({ files, name: 'create-table-foos' })
     fs.writeFileSync(path.join(files, foos, 'down.sql'), `
+      -- pg-bump disable-transaction
       drop table foos;
       do $$ begin raise exception 'bork'; end $$;
     `)
@@ -119,7 +120,7 @@ describe('down', () => {
       values (1, ${foos}),
              (2, ${bars})
     `
-    const { isError, reverted, summary } = await down({ sql, files, journal, transaction: false })
+    const { isError, reverted, summary } = await down({ sql, files, journal })
     expect(isError).to.equal(true)
     expect(reverted).to.have.lengthOf(1)
     expect(summary.find(({ isError }) => isError)).not.to.equal(undefined)

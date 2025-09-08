@@ -73,8 +73,11 @@ describe('up', () => {
     create({ files, name: 'create-table-bars' })
     await new Promise(resolve => setTimeout(resolve, 5))
     const { migration } = create({ files, name: 'create-table-bazzes' })
-    fs.writeFileSync(path.join(files, migration, 'up.sql'), 'create table bazzes (\'bork\');')
-    const { isError, applied, summary } = await up({ sql, files, journal, transaction: false })
+    fs.writeFileSync(path.join(files, migration, 'up.sql'), `
+      -- pg-bump disable-transaction
+      create table bazzes (\'bork\');
+    `)
+    const { isError, applied, summary } = await up({ sql, files, journal })
     expect(isError).to.equal(true)
     expect(applied).to.have.lengthOf(2)
     expect(summary.find(({ isError }) => isError)).not.to.equal(undefined)
